@@ -21,39 +21,53 @@ def calendario(request):
     materias = Materia.objects.all().values('id', 'nombre')
     aulas = Aula.objects.all().values('id', 'tipo', 'numero', 'departamento')
 
-    clases = Clase.objects.all().values(
-        'id', 
-        'materia__id', 
-        'materia__nombre', 
-        'docente__id', 
-        'docente__nombre', 
-        'aula__id', 
-        'fecha', 
-        'hora_inicio', 
-        'hora_fin'
-    )
-
+    if request.user.is_superuser or request.user.is_staff:
+        clases = Clase.objects.all()
+    else:
+        clases = Clase.objects.filter(docente=request.user)
     clases_list = []
     for clase in clases:
-        clase_dict = dict(clase)
-        fecha_clase = clase_dict['fecha']
-        hora_inicio_clase = clase_dict['hora_inicio']
-        hora_fin_clase = clase_dict['hora_fin']
-
-        # ✅ Asegurar que los objetos datetime sean conscientes de la zona horaria
-        fecha_hora_inicio = make_aware(datetime.combine(fecha_clase, hora_inicio_clase))
-        fecha_hora_fin = make_aware(datetime.combine(fecha_clase, hora_fin_clase))
-
-        # ✅ Incluir todas las clases (activas e inactivas)
-        clase_dict['fecha'] = fecha_clase.isoformat()
-        clase_dict['hora_inicio'] = fecha_hora_inicio.time().isoformat()
-        clase_dict['hora_fin'] = fecha_hora_fin.time().isoformat()
-        clases_list.append(clase_dict)
+        clases_list.append({
+            'id': clase.id,
+            'fecha': clase.fecha.isoformat() if clase.fecha else None,
+            'hora_inicio': clase.hora_inicio.isoformat() if clase.hora_inicio else None,
+            'hora_fin': clase.hora_fin.isoformat() if clase.hora_fin else None,
+            'materia__nombre': clase.materia.nombre,
+            'materia__id': clase.materia.id,
+            'docente__nombre': clase.docente.nombre,
+            'docente__id': clase.docente.id,
+            'aula__id': clase.aula.id,
+            # ...otros campos si necesitas...
+        })
+    context = {
+        # ...otros datos...
+        'clases_json': json.dumps(clases_list),
+        # ...otros datos...
+    }
 
     docentes_json = json.dumps(list(docentes))
     materias_json = json.dumps(list(materias))
     aulas_json = json.dumps(list(aulas))
-    clases_json = json.dumps(clases_list)  # ✅ Incluir todas las clases
+    # Serialización manual para fechas y horas
+    clases_json = json.dumps([
+        {
+            **c,
+            'fecha': c['fecha'].isoformat() if c['fecha'] else None,
+            'hora_inicio': c['hora_inicio'].isoformat() if c['hora_inicio'] else None,
+            'hora_fin': c['hora_fin'].isoformat() if c['hora_fin'] else None,
+        }
+        for c in clases.values(
+            'id', 
+            'materia__id', 
+            'materia__nombre', 
+            'docente__id', 
+            'docente__nombre', 
+            'aula__id', 
+            'fecha', 
+            'hora_inicio', 
+            'hora_fin'
+        )
+    ])
 
     return render(request, 'clases/calendario.html', {
         'docentes_json': docentes_json,

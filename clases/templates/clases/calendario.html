@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="filters mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 sm:px-0">
+    {% if user.is_superuser or user.is_staff %}
     <div class="filter-group w-full">
         <label for="filter-docente" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Docente:</label>
         <select id="filter-docente" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
@@ -12,6 +13,7 @@
             {% endfor %}
         </select>
     </div>
+    {% endif %}
     <div class="filter-group w-full">
         <label for="filter-materia" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Materia:</label>
         <select id="filter-materia" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
@@ -61,6 +63,9 @@
 <script id="materias-json" type="application/json">{{ materias_json|safe }}</script>
 <script id="aulas-json" type="application/json">{{ aulas_json|safe }}</script>
 <script id="clases-json" type="application/json">{{ clases_json|safe }}</script>
+<script>
+    window.ES_STAFF = {% if user.is_superuser or user.is_staff %}true{% else %}false{% endif %};
+</script>
 
 <!-- JS personalizado -->
 <script src="{% static 'clases/js/calendario.js' %}"></script>
