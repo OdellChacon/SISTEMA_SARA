@@ -1,0 +1,38 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Registrar Materia{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+<script src="{% static 'materias/js/materias.js' %}" defer></script>
+
+<div class="dashboard-container flex justify-center items-center">
+    <div class="table-container">
+        <form method="post" class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
+            {% csrf_token %}
+            <h2 class="text-3xl font-bold mb-6 text-center">Registrar Materia</h2>
+
+            <div class="form-grid gap-6">
+                <div class="input-group">
+                    <label for="id_nombre" class="font-semibold text-gray-700 dark:text-gray-200">Nombre</label>
+                    {{ form.nombre }}
+                </div>
+                <div class="input-group">
+                    <label for="id_codigo" class="font-semibold text-gray-700 dark:text-gray-200">Código</label>
+                    {{ form.codigo }}
+                </div>
+            </div>
+
+            <div class="btn-group mt-8">
+                <button type="submit" class="btn btn-green hover:scale-105">
+                    <i class="bx bx-save"></i> Guardar
+                </button>
+                <a href="{% url 'materias_list' %}" class="btn btn-red hover:scale-105">
+                    <i class="bx bx-x"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

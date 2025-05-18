@@ -1,0 +1,67 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="filters mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 sm:px-0">
+    <div class="filter-group w-full">
+        <label for="filter-docente" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Docente:</label>
+        <select id="filter-docente" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
+            <option value="">Todos</option>
+            {% for docente in docentes %}
+            <option value="{{ docente.id }}">{{ docente.nombre }} - {{ docente.cedula }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group w-full">
+        <label for="filter-materia" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Materia:</label>
+        <select id="filter-materia" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
+            <option value="">Todas</option>
+            {% for materia in materias %}
+            <option value="{{ materia.id }}">{{ materia.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group w-full">
+        <label for="filter-aula" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Aula:</label>
+        <select id="filter-aula" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
+            <option value="">Todas</option>
+            {% for aula in aulas %}
+            <option value="{{ aula.id }}">{{ aula.tipo }} {{ aula.numero }} - {{ aula.departamento }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group w-full">
+        <label for="filter-estado" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado:</label>
+        <select id="filter-estado" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
+            <option value="">Todos</option>
+            <option value="finalizadas">Finalizadas</option>
+            <option value="por-ver">Por ver</option>
+        </select>
+    </div>
+</div>
+
+<div id="calendario" class="bg-white dark:bg-[#444] text-black dark:text-white p-2 sm:p-4 rounded-lg shadow-md w-full max-w-full overflow-x-auto">
+    <div id="calendar" class="bg-gray-100 dark:bg-[#2e2e2e] p-1 sm:p-4 rounded-lg w-full min-w-[320px]"></div>
+</div>
+
+<!-- FullCalendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Calendario CSS -->
+<link rel="stylesheet" href="{% static 'clases/css/calendario.css' %}">
+
+<script id="docentes-json" type="application/json">{{ docentes_json|safe }}</script>
+<script id="materias-json" type="application/json">{{ materias_json|safe }}</script>
+<script id="aulas-json" type="application/json">{{ aulas_json|safe }}</script>
+<script id="clases-json" type="application/json">{{ clases_json|safe }}</script>
+
+<!-- JS personalizado -->
+<script src="{% static 'clases/js/calendario.js' %}"></script>
+{% endblock %}

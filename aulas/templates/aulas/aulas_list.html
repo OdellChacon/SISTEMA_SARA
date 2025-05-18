@@ -1,0 +1,378 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Aulas{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+<script src="{% static 'docentes/js/docentes.js' %}" defer></script>
+<script src="{% static 'aulas/js/aulas.js' %}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="table-container max-w-screen-lg mx-auto mt-10 mb-10">
+    <h2 class="text-3xl font-bold mb-6 text-center">Lista de Aulas</h2>
+    <div class="btn-group flex items-center gap-2">
+        <button class="btn btn-green" onclick="location.href='{% url 'registrar_aula' %}'">
+            <i class="bx bx-plus"></i> Registrar
+        </button>
+        <button class="btn btn-yellow" onclick="openModal('import')">
+            <i class="bx bx-import"></i> Importar
+        </button>
+        <button class="btn btn-blue" onclick="openModal('export')">
+            <i class="bx bx-export"></i> Exportar
+        </button>
+    </div>
+
+    <!-- Contenedor dinámico para eliminar seleccionados -->
+    <div id="selectionControls" class="hidden mt-4 flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
+        <span id="selectedCount" class="text-gray-700 text-sm font-medium">0 seleccionados</span>
+        <div class="flex gap-2">
+            <button id="selectAllRecords" class="btn btn-blue text-sm px-3 py-1">
+                Seleccionar todos
+            </button>
+            <button id="deleteSelected" class="btn btn-red text-sm px-3 py-1">
+                <i class="bx bx-trash"></i> Eliminar
+            </button>
+        </div>
+    </div>
+    <br>
+    <div class="overflow-x-auto">
+        <table id="aulasTable" class="display w-full">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>Departamento</th>
+                    <th>Tipo</th>
+                    <th>Número</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aula in page_obj %}
+                <tr>
+                    <td><input type="checkbox" class="aulaCheckbox" value="{{ aula.id }}"></td>
+                    <td>{{ aula.departamento }}</td>
+                    <td>{{ aula.tipo }}</td>
+                    <td>{{ aula.numero }}</td>
+                    <td>
+                        <a href="{% url 'editar_aula' aula.id %}" class="btn btn-edit">Editar</a>
+                        <button class="btn btn-delete" data-id="{{ aula.id }}">Eliminar</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&laquo;</span>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&raquo;</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+<div id="modalFormat" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden">
+    <div id="modalContent" class="bg-black dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[450px]" onclick="event.stopPropagation()">
+        <h3 id="modalTitle" class="text-xl font-semibold mb-4 text-gray-900 dark:text-white text-center"></h3>
+        <div class="grid grid-cols-3 gap-4">
+            <!-- Tarjetas de formatos -->
+            <div class="btn-format bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="csv" onclick="handleAction('csv')">
+                <i class="bx bx-file text-2xl"></i> CSV
+            </div>
+            <div class="btn-format bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="excel" onclick="handleAction('excel')">
+                <i class="bx bx-file text-2xl"></i> Excel
+            </div>
+            <div class="btn-format bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="sql" onclick="handleAction('sql')">
+                <i class="bx bx-file text-2xl"></i> SQL
+            </div>
+            <div class="btn-format bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="json" onclick="handleAction('json')">
+                <i class="bx bx-file text-2xl"></i> JSON
+            </div>
+            <div class="btn-format bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="xml" onclick="handleAction('xml')">
+                <i class="bx bx-file text-2xl"></i> XML
+            </div>
+            <div class="btn-format bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="pdf" onclick="handleAction('pdf')">
+                <i class="bx bx-file text-2xl"></i> PDF
+            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <button class="btn-cancel bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(action) {
+        const modal = document.getElementById("modalFormat");
+        const modalTitle = document.getElementById("modalTitle");
+
+        if (action === "import") {
+            modalTitle.textContent = "Seleccione el formato de Importación";
+            modal.setAttribute("data-action", "import");
+        } else if (action === "export") {
+            modalTitle.textContent = "Seleccione el formato de Exportación";
+            modal.setAttribute("data-action", "export");
+        }
+
+        modal.classList.add("active");
+    }
+
+    function closeModal() {
+        document.getElementById("modalFormat").classList.remove("active");
+    }
+
+    function handleAction(format) {
+        const modal = document.getElementById("modalFormat");
+        const action = modal.getAttribute("data-action");
+
+        if (action === "import") {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = getAcceptFormat(format);
+            input.onchange = () => handleImport(input.files[0]);
+            input.click();
+        } else if (action === "export") {
+            const exportUrl = "{% url 'exportar_aulas' 'FORMAT' 'all' %}".replace("FORMAT", format);
+            window.location.href = exportUrl;
+        }
+    }
+
+    function getAcceptFormat(format) {
+        const formats = {
+            csv: ".csv",
+            excel: ".xls,.xlsx",
+            sql: ".sql",
+            json: ".json",
+            xml: ".xml",
+            pdf: ".pdf"
+        };
+        return formats[format] || "";
+    }
+
+    function handleImport(file) {
+        const form = new FormData();
+        form.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+        form.append("file", file);
+
+        fetch("{% url 'cargar_aulas' %}", {
+            method: "POST",
+            body: form
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.text().then(text => alert("Error al importar el archivo: " + text));
+            }
+        })
+        .catch(error => {
+            alert("Hubo un error al procesar el archivo: " + error.message);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const deleteButtons = document.querySelectorAll('.btn-delete');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const aulaId = button.getAttribute('data-id');
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/aulas/eliminar/${aulaId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                Swal.fire(
+                                    'Eliminado',
+                                    'El aula ha sido eliminada.',
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error',
+                                    'No se pudo eliminar el aula.',
+                                    'error'
+                                );
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const aulaCheckboxes = document.querySelectorAll('.aulaCheckbox');
+        const selectionControls = document.getElementById('selectionControls');
+        const selectedCount = document.getElementById('selectedCount');
+        const deleteSelectedButton = document.getElementById('deleteSelected');
+        const selectAllRecordsButton = document.getElementById('selectAllRecords');
+        let allSelectedIds = new Set();
+        let allSelected = false; // Estado para saber si todos están seleccionados
+
+        // Seleccionar/Deseleccionar todos los checkboxes visibles
+        selectAllCheckbox.addEventListener('change', () => {
+            if (selectAllCheckbox.checked) {
+                aulaCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    allSelectedIds.add(checkbox.value);
+                });
+            } else {
+                aulaCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                allSelectedIds.clear(); // Vaciar el conjunto al desmarcar todo
+            }
+            updateSelectionControls();
+        });
+
+        // Actualizar controles al seleccionar/deseleccionar un checkbox individual
+        aulaCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    allSelectedIds.add(checkbox.value);
+                } else {
+                    allSelectedIds.delete(checkbox.value);
+                }
+                updateSelectionControls();
+            });
+        });
+
+        // Actualizar el contador y mostrar/ocultar controles
+        function updateSelectionControls() {
+            const selectedCountValue = allSelectedIds.size;
+            if (selectedCountValue > 0) {
+                selectionControls.classList.remove('hidden');
+                selectedCount.textContent = `${selectedCountValue} seleccionados`;
+            } else {
+                selectionControls.classList.add('hidden');
+                selectedCount.textContent = `0 seleccionados`;
+            }
+
+            // Actualizar el estado del checkbox en el encabezado
+            selectAllCheckbox.checked = aulaCheckboxes.length > 0 && Array.from(aulaCheckboxes).every(checkbox => checkbox.checked);
+        }
+
+        // Seleccionar/Deseleccionar todos los registros (incluidos los no visibles)
+        selectAllRecordsButton.addEventListener('click', () => {
+            if (!allSelected) {
+                // Seleccionar todos
+                fetch('/aulas/obtener_todos_los_ids/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ids) {
+                            allSelectedIds = new Set(data.ids);
+                            aulaCheckboxes.forEach(checkbox => {
+                                checkbox.checked = true;
+                            });
+                            updateSelectionControls();
+                            selectAllRecordsButton.textContent = 'Deseleccionar todos'; // Cambiar texto del botón
+                            allSelected = true;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener los IDs:', error);
+                    });
+            } else {
+                // Deseleccionar todos
+                aulaCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                allSelectedIds.clear(); // Vaciar el conjunto
+                updateSelectionControls();
+                selectAllRecordsButton.textContent = 'Seleccionar todos'; // Cambiar texto del botón
+                allSelected = false;
+
+                // Asegurarse de desmarcar el checkbox del encabezado
+                selectAllCheckbox.checked = false;
+            }
+        });
+
+        // Eliminar registros seleccionados
+        deleteSelectedButton.addEventListener('click', () => {
+            if (allSelectedIds.size > 0) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: 'Esta acción eliminará los registros seleccionados.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('/aulas/eliminar_seleccionados/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ ids: Array.from(allSelectedIds) })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Eliminados', 'Los registros seleccionados han sido eliminados.', 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Error', 'No se pudieron eliminar los registros seleccionados.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('Error', 'Ocurrió un problema al eliminar.', 'error');
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

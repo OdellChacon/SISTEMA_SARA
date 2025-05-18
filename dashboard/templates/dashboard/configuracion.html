@@ -1,0 +1,16 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="config-container">
+    <h1 style="font-size:1.5rem;">Configuración</h1>
+    <div class="user-profile">
+        <div class="user-info">
+            <h2 style="font-size:1.1rem;">{{ user.first_name }} {{ user.last_name }}</h2>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Teléfono:</strong> {{ user.profile.phone_number }}</p>
+            <p><strong>Dirección:</strong> {{ user.profile.address }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

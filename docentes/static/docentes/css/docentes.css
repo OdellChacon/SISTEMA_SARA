@@ -1,0 +1,794 @@
+/* Import Google font - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+
+/* General */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: #eef5fe;
+  padding: 20px;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Modo oscuro */
+body.dark {
+  background: #1e1e1e;
+  color: white;
+}
+
+/* Contenedor general */
+.dashboard-container {
+  display: flex;
+  justify-content: center; /* Centrar horizontalmente */
+  align-items: center; /* Centrar verticalmente */
+  padding: 20px; /* Espaciado interno */
+  min-height: 100vh; /* Asegurar que ocupe toda la altura de la pantalla */
+}
+
+.table-container {
+  width: 100%; /* Asegurar que ocupe todo el ancho disponible */
+  max-width: 1200px; /* Limitar el ancho máximo */
+  margin: 0 auto; /* Centrar horizontalmente */
+  padding: 30px; /* Espaciado interno */
+  background: #fff; /* Fondo blanco */
+  border-radius: 12px; /* Bordes redondeados */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* Sombra */
+  transition: background 0.3s, transform 0.3s;
+  min-height: 80vh;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.table-container:hover {
+  transform: translateY(-5px);
+}
+
+/* Modo oscuro */
+body.dark .table-container {
+  background: #2e2e2e;
+  box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Estilo de la tabla */
+table {
+  table-layout: auto;
+  width: 100%;
+  border-collapse: separate; /* Cambiar a bordes separados */
+  border-spacing: 0 8px; /* Espaciado entre filas */
+  font-size: 14px; /* Tamaño de fuente más legible */
+  background-color: #f9f9f9; /* Fondo claro */
+  border-radius: 8px; /* Bordes redondeados */
+  overflow: hidden;
+}
+
+thead {
+  background: #4070f4;
+  color: white;
+  text-transform: uppercase; /* Texto en mayúsculas */
+  font-size: 13px;
+  font-weight: normal; /* Cambiar a fuente normal */
+  transition: background 0.3s;
+}
+
+/* Modo oscuro */
+body.dark thead {
+  background: #0056b3;
+}
+
+th, td {
+  padding: 12px 16px; /* Más espacio en las celdas */
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid #ddd; /* Línea divisoria */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+tbody tr {
+  background: white; /* Fondo blanco para las filas */
+  transition: transform 0.2s, box-shadow 0.2s; /* Animación al pasar el mouse */
+}
+
+tbody tr:hover {
+  transform: none; /* Quitar el efecto de zoom */
+  box-shadow: none; /* Quitar la sombra */
+  background: #f0f8ff; /* Fondo azul claro */
+}
+
+tbody tr:nth-child(even) {
+  background: #f7faff; /* Fondo alternativo */
+}
+
+tbody tr:nth-child(even):hover {
+  background: #e6f2ff; /* Fondo alternativo al pasar el mouse */
+}
+
+/* Bordes redondeados para la tabla */
+table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Encabezados con bordes redondeados */
+thead th:first-child {
+  border-top-left-radius: 8px;
+}
+
+thead th:last-child {
+  border-top-right-radius: 8px;
+}
+
+/* Scrollbar personalizado */
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Modo oscuro */
+body.dark th,
+body.dark td {
+  border-bottom: 1px solid #555;
+}
+
+/* Alternar colores de filas */
+tbody tr:hover {
+  background: #f0f8ff;
+  transition: background 0.3s;
+}
+
+/* Modo oscuro */
+body.dark tbody tr:hover {
+  background: #444;
+}
+
+body.dark tbody tr:nth-child(even) {
+  background: #2a2a2a;
+}
+
+body.dark tbody tr:nth-child(even):hover {
+  background: #3a3a3a;
+}
+
+/* Checkbox estilizado */
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4070f4;
+}
+
+input[type="checkbox"]:hover {
+  box-shadow: 0 0 8px rgba(64, 112, 244, 0.5);
+}
+
+/* Botones de acción */
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  margin-top: 20px;
+}
+
+/* Botones */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: normal; /* Cambiar a fuente normal */
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+  border: none;
+  min-width: 120px;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  transition: transform 0.3s ease-in-out, background 0.3s ease-in-out;
+}
+
+.btn:hover {
+  transform: none; /* Quitar el efecto de zoom */
+  background: inherit; /* Mantener el fondo original */
+}
+
+/* Botones de colores */
+.btn-green {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-yellow {
+  background-color: #ffc107;
+  color: white;
+}
+
+.btn-blue {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-blue:hover {
+  background-color: #007bff; /* Mantener el color original */
+  transform: none; /* Quitar el efecto de zoom */
+}
+
+.btn-green:hover {
+  background-color: #218838;
+}
+
+.btn-yellow:hover {
+  background-color: #e0a800;
+}
+
+.btn-red {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-red:hover {
+  background-color: #c82333;
+}
+
+/* Botones de acción específicos */
+.btn-view,
+.btn-edit,
+.btn-delete {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 10px; /* Ajustar el padding */
+  font-size: 12px;
+  width: 2px; /* Ancho igual a la altura para hacerlo cuadrado */
+  height: 24px; /* Altura fija */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-view:hover {
+  background-color: #138496;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+}
+
+.btn-edit:hover {
+  background-color: #e0a800;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
+}
+
+/* Ajustar el ancho de las columnas */
+#docentesTable th:nth-child(1),
+#docentesTable td:nth-child(1) {
+  width: 5%;
+}
+
+#docentesTable th:nth-child(2),
+#docentesTable td:nth-child(2),
+#docentesTable th:nth-child(3),
+#docentesTable td:nth-child(3) {
+  width: 12%;
+}
+
+#docentesTable th:nth-child(4),
+#docentesTable td:nth-child(4) {
+  width: 25%;
+}
+
+#docentesTable th:nth-child(5),
+#docentesTable td:nth-child(5) {
+  width: 15%;
+}
+
+#docentesTable th:nth-child(6),
+#docentesTable td:nth-child(6) {
+  width: 10%;
+}
+
+#docentesTable th:nth-child(7),
+#docentesTable td:nth-child(7) {
+  width: 18%;
+}
+
+/* Modo oscuro */
+body.dark .btn {
+  filter: brightness(1.2);
+}
+
+body.dark .btn-green {
+  background-color: #28a745;
+}
+
+body.dark .btn-red {
+  background-color: #dc3545;
+}
+
+body.dark .btn-blue {
+  background-color: #007bff;
+}
+
+body.dark .btn-yellow {
+  background-color: #e0a800;
+}
+
+/* Scroll horizontal */
+.dataTables_wrapper {
+  overflow-x: auto;
+}
+
+/* Paginación */
+.pagination {
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pagination .page-item .page-link {
+  color: #007bff;
+  border: 1px solid #ddd;
+  transition: background 0.3s, color 0.3s;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #ccc;
+}
+
+/* Modo oscuro */
+body.dark .pagination .page-item .page-link {
+  color: #000; /* Texto negro para páginas inactivas */
+  background-color: #f1f1f1; /* Fondo claro para contraste */
+  border: 1px solid #555; /* Borde gris oscuro */
+  transition: background 0.3s, color 0.3s;
+}
+
+body.dark .pagination .page-item.active .page-link {
+  background-color: #444; /* Fondo gris oscuro */
+  border-color: #444; /* Borde gris oscuro */
+  color: white; /* Texto blanco */
+}
+
+body.dark .pagination .page-item.disabled .page-link {
+  color: #777; /* Texto gris claro */
+  background-color: transparent; /* Fondo transparente */
+}
+
+/* Estilo para la barra de búsqueda */
+#searchInput {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#searchInput:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Modo oscuro */
+body.dark #searchInput {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+body.dark #searchInput:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Estilo para formularios */
+.docente-form {
+  background: linear-gradient(to right, #ffffff, #f9f9f9);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease-in-out;
+}
+
+.docente-form:hover {
+  transform: translateY(-5px);
+}
+
+.docente-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.docente-form .input-group label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.docente-form .input-group input,
+.docente-form .input-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.docente-form .input-group input:focus,
+.docente-form .input-group select:focus {
+  border-color: #4070f4;
+  box-shadow: 0 0 8px rgba(64, 112, 244, 0.4);
+}
+
+/* Modo oscuro para etiquetas */
+body.dark .input-group label {
+    color: #f1f1f1; /* Texto blanco */
+}
+
+/* Modo oscuro para campos de entrada */
+body.dark .input-group input,
+body.dark .input-group select {
+    background-color: #333; /* Fondo oscuro */
+    color: #f1f1f1; /* Texto blanco */
+    border: 1px solid #555; /* Borde gris oscuro */
+}
+
+body.dark .input-group input:focus,
+body.dark .input-group select:focus {
+    border-color: #007bff; /* Borde azul al enfocar */
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.4); /* Sombra azul */
+}
+
+/* Inputs en modo oscuro */
+body.dark .input-group input {
+    background-color: #333; /* Fondo oscuro */
+    color: #f1f1f1; /* Texto blanco */
+    border: 1px solid #555; /* Borde gris oscuro */
+}
+
+body.dark .input-group input::placeholder {
+    color: #aaa; /* Color del placeholder en modo oscuro */
+}
+
+/* Modo oscuro para el contenedor del formulario */
+body.dark .docente-form {
+    background: linear-gradient(to right, #2e2e2e, #3a3a3a); /* Fondo degradado oscuro */
+    color: #f1f1f1; /* Texto blanco */
+    border: 1px solid #555; /* Borde gris oscuro */
+}
+
+/* Botones */
+.btn-group {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+#modalFormat {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Fondo negro con 40% de opacidad */
+  z-index: 1000;
+}
+
+#modalFormat.hidden {
+  display: none;
+}
+
+#modalContent {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  text-align: center;
+}
+
+#modalTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.btn-format {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-format i {
+  font-size: 28px;
+}
+
+.btn-format:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-format.bg-blue-500 {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.btn-format.bg-green-500 {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.btn-format.bg-gray-500 {
+  background: linear-gradient(135deg, #bdc3c7, #2c3e50);
+}
+
+.btn-format.bg-yellow-500 {
+  background: linear-gradient(135deg, #fbc531, #e1b12c);
+}
+
+.btn-format.bg-purple-500 {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+}
+
+.btn-format.bg-red-500 {
+  background: linear-gradient(135deg, #ff6b6b, #f94d6a);
+}
+
+.btn-cancel {
+  margin-top: 20px;
+  background: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: #c82333;
+}
+
+/* Asegurar que los íconos y texto no cambien de color al pasar el mouse */
+.btn i, .btn {
+  color: inherit; /* Mantener el color original */
+}
+
+/* Asegurar que todos los íconos y fuentes sean blancos */
+.btn i, .btn {
+  color: white !important; /* Forzar color blanco */
+}
+
+.ant-space {
+  display: inline-flex;
+  align-items: center;
+  row-gap: 8px;
+  column-gap: 8px;
+  width: 100%;
+}
+
+.ant-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+}
+
+.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.ant-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.ant-btn-icon {
+  font-size: 16px;
+  color: #555;
+}
+
+.correo-largo {
+    width: 150%; /* Hacer el campo de correo más largo */
+}
+
+/* Ajustar el fondo y los colores de la tabla en modo oscuro */
+.dashboard-container.dark .table-container {
+  background: #2e2e2e;
+  color: white;
+  box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-container.dark table {
+  background-color: #2e2e2e;
+  color: white;
+}
+
+.dashboard-container.dark thead {
+  background: #444;
+  color: white;
+}
+
+.dashboard-container.dark tbody tr {
+  background: #333;
+  color: white;
+}
+
+.dashboard-container.dark tbody tr:nth-child(even) {
+  background: #2a2a2a;
+}
+
+.dashboard-container.dark tbody tr:hover {
+  background: #444;
+}
+
+.dashboard-container.dark tbody tr:nth-child(even):hover {
+  background: #3a3a3a;
+}
+
+.dashboard-container.dark th,
+.dashboard-container.dark td {
+  border-bottom: 1px solid #555;
+}
+
+.dashboard-container.dark #searchInput {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+.dashboard-container.dark #searchInput:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Ajustar los botones en modo oscuro */
+.dashboard-container.dark .btn {
+  filter: brightness(1.2);
+}
+
+.dashboard-container.dark .btn-green {
+  background-color: #28a745;
+}
+
+.dashboard-container.dark .btn-red {
+  background-color: #dc3545;
+}
+
+.dashboard-container.dark .btn-blue {
+  background-color: #007bff;
+}
+
+.dashboard-container.dark .btn-yellow {
+  background-color: #e0a800;
+}
+
+/* Campos de entrada y menús desplegables en modo claro */
+.input-group input,
+.input-group select {
+    background-color: #fff; /* Fondo blanco */
+    color: #333; /* Texto gris oscuro */
+    border: 1px solid #ddd; /* Borde gris claro */
+    transition: background 0.3s, color 0.3s, border 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: #4070f4; /* Borde azul al enfocar */
+    box-shadow: 0 0 6px rgba(64, 112, 244, 0.4); /* Sombra azul */
+}
+
+/* Modo oscuro para campos de entrada y menús desplegables */
+body.dark .input-group input,
+body.dark .input-group select {
+    background-color: #333; /* Fondo oscuro */
+    color: #f1f1f1; /* Texto blanco */
+    border: 1px solid #555; /* Borde gris oscuro */
+}
+
+body.dark .input-group input:focus,
+body.dark .input-group select:focus {
+    border-color: #007bff; /* Borde azul al enfocar */
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.4); /* Sombra azul */
+}
+
+h2 {
+  color: #333; /* Modo claro */
+  transition: color 0.3s;
+}
+
+body.dark h2 {
+  color: #f1f1f1; /* Modo oscuro */
+}
+
+label {
+  color: #000; /* Texto negro en modo claro */
+  transition: color 0.3s;
+}
+
+body.dark label {
+  color: #f1f1f1; /* Texto blanco en modo oscuro */
+}
+
+input[readonly] {
+  background-color: #fff; /* Modo claro */
+  color: #333; /* Modo claro */
+  border: 1px solid #ddd;
+  transition: background-color 0.3s, color 0.3s, border 0.3s;
+}
+
+body.dark input[readonly] {
+  background-color: #333; /* Modo oscuro */
+  color: #f1f1f1; /* Modo oscuro */
+  border: 1px solid #555;
+}
+
+button.ant-btn {
+  background-color: #f9f9f9; /* Modo claro */
+  color: #333; /* Modo claro */
+  border: 1px solid #ddd;
+  transition: background-color 0.3s, color 0.3s, border 0.3s;
+}
+
+body.dark button.ant-btn {
+  background-color: #444; /* Modo oscuro */
+  color: #f1f1f1; /* Modo oscuro */
+  border: 1px solid #555;
+}

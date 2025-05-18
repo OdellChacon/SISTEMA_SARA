@@ -1,0 +1,408 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const calendarioEl = document.getElementById('calendar');
+
+    if (!calendarioEl) {
+        console.error("❌ Contenedor del calendario no encontrado");
+        return;
+    }
+
+    // ✅ Parsear datos enviados desde el backend
+    const listaDocentes = JSON.parse(document.getElementById('docentes-json').textContent);
+    const listaMaterias = JSON.parse(document.getElementById('materias-json').textContent);
+    const listaAulas = JSON.parse(document.getElementById('aulas-json').textContent);
+    const listaClases = JSON.parse(document.getElementById('clases-json').textContent);
+
+    const calendar = new FullCalendar.Calendar(calendarioEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        aspectRatio: 1.5,
+        height: 'auto',
+        contentHeight: 600,
+        scrollTime: '08:00:00',
+        events: listaClases.map(clase => {
+            const now = new Date();
+            const endDate = new Date(`${clase.fecha}T${clase.hora_fin}`);
+            const isInactive = endDate < now; // Determinar si la clase es inactiva
+
+            return {
+                id: clase.id,
+                title: `${clase['materia__nombre']} - ${clase['docente__nombre']}`,
+                start: `${clase.fecha}T${clase.hora_inicio}`,
+                end: `${clase.fecha}T${clase.hora_fin}`,
+                className: isInactive ? 'pasado' : 'activo', // Asignar clase CSS
+                extendedProps: {
+                    aula: `${listaAulas.find(aula => aula.id == clase['aula__id'])?.tipo || 'No especificado'} 
+                           ${listaAulas.find(aula => aula.id == clase['aula__id'])?.numero || ''} - 
+                           ${listaAulas.find(aula => aula.id == clase['aula__id'])?.departamento || ''}`,
+                    docente_id: clase['docente__id'],
+                    materia_id: clase['materia__id'],
+                    aula_id: clase['aula__id']
+                }
+            };
+        }),
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        dateClick: function(info) {
+            // ✅ Registrar clases al hacer clic en un día
+            Swal.fire({
+                title: 'Registrar Clase',
+                html: `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left;">
+                        <label>Docente</label>
+                        <select id="docente" class="swal2-input" style="grid-column: span 2;">
+                            ${listaDocentes.map(docente => `<option value="${docente.id}">${docente.nombre}</option>`).join('')}
+                        </select>
+
+                        <label>Materia</label>
+                        <select id="materia" class="swal2-input" style="grid-column: span 2;">
+                            ${listaMaterias.map(materia => `<option value="${materia.id}">${materia.nombre}</option>`).join('')}
+                        </select>
+
+                        <label>Aula</label>
+                        <select id="aula" class="swal2-input" style="grid-column: span 2;">
+                            ${listaAulas.map(aula => `
+                                <option value="${aula.id}">
+                                    ${aula.tipo} ${aula.numero} - ${aula.departamento}
+                                </option>`).join('')}
+                        </select>
+
+                        <label>Hora Inicio</label>
+                        <input id="hora_inicio" type="time" class="swal2-input" value="08:00">
+
+                        <label>Hora Fin</label>
+                        <input id="hora_fin" type="time" class="swal2-input" value="09:00">
+                    </div>
+                `,
+                confirmButtonText: 'Guardar',
+                showCancelButton: true,
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const materia = document.getElementById('materia').value;
+                    const aula = document.getElementById('aula').value;
+                    const docenteId = document.getElementById('docente').value;
+                    const hora_inicio = document.getElementById('hora_inicio').value;
+                    const hora_fin = document.getElementById('hora_fin').value;
+
+                    if (!materia || !aula || !hora_inicio || !hora_fin) {
+                        Swal.showValidationMessage('Todos los campos son obligatorios');
+                        return false;
+                    }
+
+                    return {
+                        materia_id: materia,
+                        aula_id: aula,
+                        docente_id: docenteId,
+                        fecha_inicio: info.dateStr,
+                        hora_inicio,
+                        hora_fin
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const nuevaClase = result.value;
+
+                    fetch('/clases/registrar-clase/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(nuevaClase)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            Swal.fire('Clase Registrada', 'La clase fue creada exitosamente.', 'success');
+                            calendar.addEvent({
+                                id: data.id,
+                                title: `${listaMaterias.find(m => m.id == nuevaClase.materia_id).nombre} - ${listaDocentes.find(d => d.id == nuevaClase.docente_id).nombre}`,
+                                start: `${nuevaClase.fecha_inicio}T${nuevaClase.hora_inicio}`,
+                                end: `${nuevaClase.fecha_inicio}T${nuevaClase.hora_fin}`,
+                                extendedProps: {
+                                    aula: `${listaAulas.find(aula => aula.id == nuevaClase.aula_id)?.tipo || 'No especificado'} 
+                                           ${listaAulas.find(aula => aula.id == nuevaClase.aula_id)?.numero || ''} - 
+                                           ${listaAulas.find(aula => aula.id == nuevaClase.aula_id)?.departamento || ''}`
+                                }
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'No se pudo registrar la clase.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Ocurrió un error al registrar la clase.', 'error');
+                    });
+                }
+            });
+        },
+        eventClick: function(info) {
+            // ✅ Mostrar información de la clase y permitir acciones
+            Swal.fire({
+                title: info.event.title,
+                html: `
+                    <p><strong>Aula:</strong> ${info.event.extendedProps.aula || 'No especificado'}</p>
+                    <p><strong>Inicio:</strong> ${info.event.start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                    <p><strong>Fin:</strong> ${info.event.end ? info.event.end.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'No especificado'}</p>
+                    <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+                        <button id="btn-eliminar" class="swal2-styled" style="background-color: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 12px;">
+                            <i class="fas fa-trash-alt" style="font-size: 14px; margin-right: 5px;"></i> Eliminar
+                        </button>
+                        <button id="btn-reprogramar" class="swal2-styled" style="background-color: #ffc107; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 12px;">
+                            <i class="fas fa-edit" style="font-size: 14px; margin-right: 5px;"></i> Reprogramar
+                        </button>
+                        <button id="btn-asistencia" class="swal2-styled" style="background-color: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; font-size: 12px;">
+                            <i class="fas fa-check-circle" style="font-size: 14px; margin-right: 5px;"></i> Asistencia
+                        </button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                didOpen: () => {
+                    // ✅ Acción para el botón "Eliminar"
+                    document.getElementById('btn-eliminar').addEventListener('click', () => {
+                        Swal.fire({
+                            title: '¿Estás seguro?',
+                            text: 'Esta acción eliminará la clase seleccionada.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, eliminar',
+                            cancelButtonText: 'Cancelar'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                fetch(`/clases/eliminar-clase/`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken')
+                                    },
+                                    body: JSON.stringify({ id: info.event.id })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        Swal.fire('Eliminado', 'La clase ha sido eliminada.', 'success');
+                                        info.event.remove(); // ✅ Eliminar el evento del calendario
+                                    } else {
+                                        Swal.fire('Error', data.message || 'No se pudo eliminar la clase.', 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    Swal.fire('Error', 'Ocurrió un error al eliminar la clase.', 'error');
+                                });
+                            }
+                        });
+                    });
+
+                    // ✅ Acción para el botón "Reprogramar"
+                    document.getElementById('btn-reprogramar').addEventListener('click', () => {
+                        Swal.fire({
+                            title: 'Reprogramar Clase',
+                            html: `
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left;">
+                                    <label>Docente</label>
+                                    <select id="docente" class="swal2-input" style="grid-column: span 2;">
+                                        ${listaDocentes.map(docente => `
+                                            <option value="${docente.id}" ${docente.id == info.event.extendedProps.docente_id ? 'selected' : ''}>
+                                                ${docente.nombre}
+                                            </option>`).join('')}
+                                    </select>
+
+                                    <label>Materia</label>
+                                    <select id="materia" class="swal2-input" style="grid-column: span 2;">
+                                        ${listaMaterias.map(materia => `
+                                            <option value="${materia.id}" ${materia.id == info.event.extendedProps.materia_id ? 'selected' : ''}>
+                                                ${materia.nombre}
+                                            </option>`).join('')}
+                                    </select>
+
+                                    <label>Aula</label>
+                                    <select id="aula" class="swal2-input" style="grid-column: span 2;">
+                                        ${listaAulas.map(aula => `
+                                            <option value="${aula.id}" ${aula.id == info.event.extendedProps.aula_id ? 'selected' : ''}>
+                                                ${aula.tipo} ${aula.numero} - ${aula.departamento}
+                                            </option>`).join('')}
+                                    </select>
+
+                                    <label>Hora Inicio</label>
+                                    <input id="hora_inicio" type="time" class="swal2-input" value="${info.event.start.toISOString().substring(11, 16)}">
+
+                                    <label>Hora Fin</label>
+                                    <input id="hora_fin" type="time" class="swal2-input" value="${info.event.end ? info.event.end.toISOString().substring(11, 16) : ''}">
+                                </div>
+                            `,
+                            confirmButtonText: 'Guardar',
+                            showCancelButton: true,
+                            cancelButtonText: 'Cancelar',
+                            preConfirm: () => {
+                                const materia = document.getElementById('materia').value;
+                                const aula = document.getElementById('aula').value;
+                                const docenteId = document.getElementById('docente').value;
+                                const hora_inicio = document.getElementById('hora_inicio').value;
+                                const hora_fin = document.getElementById('hora_fin').value;
+
+                                if (!materia || !aula || !hora_inicio || !hora_fin) {
+                                    Swal.showValidationMessage('Todos los campos son obligatorios');
+                                    return false;
+                                }
+
+                                return {
+                                    id: info.event.id,
+                                    materia_id: materia,
+                                    aula_id: aula,
+                                    docente_id: docenteId,
+                                    fecha_inicio: info.event.start.toISOString().substring(0, 10),
+                                    hora_inicio,
+                                    hora_fin
+                                };
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                fetch(`/clases/reprogramar-clase/`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken')
+                                    },
+                                    body: JSON.stringify(result.value)
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        Swal.fire('Reprogramado', 'La clase ha sido actualizada.', 'success');
+                                        // ✅ Actualizar el evento en el calendario dinámicamente
+                                        const updatedEvent = calendar.getEventById(info.event.id);
+                                        updatedEvent.setProp('title', `${listaMaterias.find(m => m.id == result.value.materia_id).nombre} - ${listaDocentes.find(d => d.id == result.value.docente_id).nombre}`);
+                                        updatedEvent.setStart(`${result.value.fecha_inicio}T${result.value.hora_inicio}`);
+                                        updatedEvent.setEnd(`${result.value.fecha_inicio}T${result.value.hora_fin}`);
+                                        updatedEvent.setExtendedProp('aula', `${listaAulas.find(aula => aula.id == result.value.aula_id)?.tipo || 'No especificado'} 
+                                                                               ${listaAulas.find(aula => aula.id == result.value.aula_id)?.numero || ''} - 
+                                                                               ${listaAulas.find(aula => aula.id == result.value.aula_id)?.departamento || ''}`);
+                                    } else {
+                                        Swal.fire('Error', data.message || 'No se pudo reprogramar la clase.', 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    Swal.fire('Error', 'Ocurrió un error al reprogramar la clase.', 'error');
+                                });
+                            }
+                        });
+                    });
+
+                    // ✅ Acción para el botón "Registrar Asistencia"
+                    document.getElementById('btn-asistencia').addEventListener('click', () => {
+                        Swal.fire({
+                            title: 'Registrar Asistencia',
+                            html: `
+                                <form id="asistencia-form" enctype="multipart/form-data">
+                                    <label for="foto_clase">Foto de la Clase:</label>
+                                    <input id="foto_clase" name="foto_clase" type="file" class="swal2-input" accept="image/*" required>
+
+                                    <label for="foto_lista">Foto de la Lista:</label>
+                                    <input id="foto_lista" name="foto_lista" type="file" class="swal2-input" accept="image/*" required>
+
+                                    <label for="comentarios">Comentarios:</label>
+                                    <textarea id="comentarios" name="comentarios" class="swal2-textarea" rows="3" placeholder="Opcional"></textarea>
+                                </form>
+                            `,
+                            confirmButtonText: 'Guardar',
+                            showCancelButton: true,
+                            cancelButtonText: 'Cancelar',
+                            preConfirm: () => {
+                                const formData = new FormData();
+                                const fotoClase = document.getElementById('foto_clase').files[0];
+                                const fotoLista = document.getElementById('foto_lista').files[0];
+                                const comentarios = document.getElementById('comentarios').value;
+
+                                if (!fotoClase || !fotoLista) {
+                                    Swal.showValidationMessage('Debe subir ambas fotos.');
+                                    return false;
+                                }
+
+                                formData.append('clase_id', info.event.id);
+                                formData.append('foto_clase', fotoClase);
+                                formData.append('foto_lista', fotoLista);
+                                formData.append('comentarios', comentarios);
+
+                                return formData;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                fetch('/clases/registrar-asistencia/', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRFToken': getCookie('csrftoken')
+                                    },
+                                    body: result.value
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        Swal.fire('Asistencia Registrada', 'La asistencia fue registrada exitosamente.', 'success');
+                                    } else {
+                                        Swal.fire('Error', data.message || 'No se pudo registrar la asistencia.', 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    Swal.fire('Error', 'Ocurrió un error al registrar la asistencia.', 'error');
+                                });
+                            }
+                        });
+                    });
+                }
+            });
+        }
+    });
+
+    calendar.render();
+    console.log("✅ Calendario cargado correctamente");
+
+    const filterDocente = document.getElementById('filter-docente');
+    const filterMateria = document.getElementById('filter-materia');
+    const filterAula = document.getElementById('filter-aula');
+    const filterEstado = document.getElementById('filter-estado');
+
+    function applyFilters() {
+        const docenteId = filterDocente.value;
+        const materiaId = filterMateria.value;
+        const aulaId = filterAula.value;
+        const estado = filterEstado.value;
+
+        calendar.getEvents().forEach(event => {
+            const isDocenteMatch = !docenteId || event.extendedProps.docente_id == docenteId;
+            const isMateriaMatch = !materiaId || event.extendedProps.materia_id == materiaId;
+            const isAulaMatch = !aulaId || event.extendedProps.aula_id == aulaId;
+
+            const now = new Date();
+            const isEstadoMatch =
+                !estado ||
+                (estado === 'finalizadas' && new Date(event.end) < now) ||
+                (estado === 'por-ver' && new Date(event.start) > now);
+
+            event.setProp('display', isDocenteMatch && isMateriaMatch && isAulaMatch && isEstadoMatch ? '' : 'none');
+        });
+    }
+
+    [filterDocente, filterMateria, filterAula, filterEstado].forEach(filter => {
+        filter.addEventListener('change', applyFilters);
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}

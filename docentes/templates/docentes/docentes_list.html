@@ -1,0 +1,481 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Docentes{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'docentes/js/docentes.js' %}" defer></script>
+
+<div class="dashboard-container flex justify-center items-center">
+    <div class="table-container max-w-screen-lg mx-auto mt-10 mb-10">
+        <h2 class="text-3xl font-bold mb-6 text-center">Lista de Docentes</h2>  
+
+
+        <div class="btn-group flex items-center gap-2">
+            <button class="btn btn-green" onclick="location.href='{% url 'registrar_docente' %}'">
+                <i class="bx bx-user-plus"></i> Registrar
+            </button>
+            <button class="btn btn-yellow" onclick="openModal('import')">
+                <i class="bx bx-import"></i> Importar
+            </button>
+            <button class="btn btn-blue" onclick="openModal('export')">
+                <i class="bx bx-export"></i> Exportar
+            </button>
+        </div>
+        <br>
+        <!-- Barra de búsqueda -->
+        <div class="search-bar mb-4">
+            <input type="text" id="searchInput" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Buscar...">
+        </div>
+
+        <!-- Controles de selección -->
+        <div id="selectionControls" class="hidden mt-4 flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
+            <span id="selectedCount" class="text-gray-700 text-sm font-medium">0 seleccionados</span>
+            <div class="flex gap-2">
+                <button id="selectAllRecords" class="btn btn-blue text-sm px-3 py-1">Seleccionar todos</button>
+                <button id="deleteSelected" class="btn btn-red text-sm px-3 py-1">
+                    <i class="bx bx-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table id="docentesTable" class="display w-full">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Cédula</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for docente in docentes %}
+                    <tr>
+                        <td><input type="checkbox" class="docenteCheckbox" value="{{ docente.id }}"></td>
+                        <td>{{ docente.nombre }}</td>
+                        <td>{{ docente.apellido }}</td>
+                        <td>{{ docente.cedula }}</td>
+                        <td>{{ docente.activo|yesno:"Activo,Inactivo" }}</td>
+                        <td>
+                            <a href="{% url 'detalle_docente' docente.id %}" class="btn btn-view" title="Ver">
+                                <i class="bx bx-show"></i>
+                            </a>
+                            <a href="{% url 'editar_docente' docente.id %}" class="btn btn-edit" title="Editar">
+                                <i class="bx bx-edit"></i>
+                            </a>
+                            <button class="btn btn-delete" onclick="confirmarEliminacion({{ docente.id }})" title="Eliminar">
+                                <i class="bx bx-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&laquo;</span>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal para mostrar la información del docente -->
+<div id="modalDocente" class="modal hidden">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h2>Información del Docente</h2>
+        <div id="docenteInfo">
+            <!-- Aquí se cargará la información del docente -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Importación/Exportación -->
+<div id="modalFormat" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden">
+    <div id="modalContent" class="bg-black dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[450px]" onclick="event.stopPropagation()">
+        <h3 id="modalTitle" class="text-xl font-semibold mb-4 text-gray-900 dark:text-white text-center"></h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+            <!-- Tarjetas de formatos -->
+            <div class="btn-format bg-blue-500 hover:bg-blue-600" data-format="csv" onclick="handleAction('csv')">
+                <i class="bx bx-file"></i> CSV
+            </div>
+            <div class="btn-format bg-green-500 hover:bg-green-600" data-format="excel" onclick="handleAction('excel')">
+                <i class="bx bx-file"></i> Excel
+            </div>
+            <div class="btn-format bg-gray-500 hover:bg-gray-600" data-format="sql" onclick="handleAction('sql')">
+                <i class="bx bx-file"></i> SQL
+            </div>
+            <div class="btn-format bg-yellow-500 hover:bg-yellow-600" data-format="json" onclick="handleAction('json')">
+                <i class="bx bx-file"></i> JSON
+            </div>
+            <div class="btn-format bg-purple-500 hover:bg-purple-600" data-format="xml" onclick="handleAction('xml')">
+                <i class="bx bx-file"></i> XML
+            </div>
+            <div class="btn-format bg-red-500 hover:bg-red-600" data-format="pdf" onclick="handleAction('pdf')">
+                <i class="bx bx-file"></i> PDF
+            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <button class="btn-cancel bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const docenteCheckboxes = document.querySelectorAll('.docenteCheckbox');
+        const selectionControls = document.getElementById('selectionControls');
+        const selectedCount = document.getElementById('selectedCount');
+        const deleteSelectedButton = document.getElementById('deleteSelected');
+        const selectAllRecordsButton = document.getElementById('selectAllRecords');
+        let allSelectedIds = new Set();
+        let allSelected = false;
+
+        selectAllCheckbox.addEventListener('change', () => {
+            if (selectAllCheckbox.checked) {
+                docenteCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    allSelectedIds.add(checkbox.value);
+                });
+            } else {
+                docenteCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                allSelectedIds.clear();
+            }
+            updateSelectionControls();
+        });
+
+        docenteCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    allSelectedIds.add(checkbox.value);
+                } else {
+                    allSelectedIds.delete(checkbox.value);
+                }
+                updateSelectionControls();
+            });
+        });
+
+        function updateSelectionControls() {
+            const selectedCountValue = allSelectedIds.size;
+            if (selectedCountValue > 0) {
+                selectionControls.classList.remove('hidden');
+                selectedCount.textContent = `${selectedCountValue} seleccionados`;
+            } else {
+                selectionControls.classList.add('hidden');
+                selectedCount.textContent = `0 seleccionados`;
+            }
+            selectAllCheckbox.checked = docenteCheckboxes.length > 0 && Array.from(docenteCheckboxes).every(checkbox => checkbox.checked);
+        }
+
+        selectAllRecordsButton.addEventListener('click', () => {
+            if (!allSelected) {
+                fetch('/docentes/obtener_todos_los_ids/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.ids) {
+                            allSelectedIds = new Set(data.ids);
+                            docenteCheckboxes.forEach(checkbox => {
+                                checkbox.checked = true;
+                            });
+                            updateSelectionControls();
+                            selectAllRecordsButton.textContent = 'Deseleccionar todos';
+                            allSelected = true;
+                        }
+                    });
+            } else {
+                docenteCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                allSelectedIds.clear();
+                updateSelectionControls();
+                selectAllRecordsButton.textContent = 'Seleccionar todos';
+                allSelected = false;
+                selectAllCheckbox.checked = false;
+            }
+        });
+
+        deleteSelectedButton.addEventListener('click', () => {
+            if (allSelectedIds.size > 0) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: 'Esta acción eliminará los registros seleccionados.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('/docentes/eliminar_seleccionados/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ ids: Array.from(allSelectedIds) })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Eliminados', 'Los registros seleccionados han sido eliminados.', 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Error', 'No se pudieron eliminar los registros seleccionados.', 'error');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        // Implementación de la barra de búsqueda dinámica en el cliente
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.querySelector('#docentesTable tbody');
+
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.trim();
+
+            if (searchTerm.length > 0) {
+                fetch(`/docentes/buscar/?q=${encodeURIComponent(searchTerm)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        tableBody.innerHTML = ''; // Limpiar la tabla
+                        if (data.results.length > 0) {
+                            data.results.forEach(docente => {
+                                const row = `
+                                    <tr>
+                                        <td><input type="checkbox" class="docenteCheckbox" value="${docente.id}"></td>
+                                        <td>${docente.nombre}</td>
+                                        <td>${docente.apellido}</td>
+                                        <td>${docente.correo}</td>
+                                        <td>${docente.fecha_ingreso}</td>
+                                        <td>
+                                            <span class="status ${docente.activo ? 'active' : 'inactive'}" style="color: ${docente.activo ? 'green' : 'red'};">
+                                                ${docente.activo ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="/docentes/detalle/${docente.id}" class="btn btn-view" title="Ver">
+                                                <i class="bx bx-show"></i>
+                                            </a>
+                                            <a href="/docentes/editar/${docente.id}" class="btn btn-edit" title="Editar">
+                                                <i class="bx bx-edit"></i>
+                                            </a>
+                                            <button class="btn btn-delete" onclick="confirmarEliminacion(${docente.id})" title="Eliminar">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                                tableBody.insertAdjacentHTML('beforeend', row);
+                            });
+                        } else {
+                            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron resultados</td></tr>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al buscar:', error);
+                    });
+            } else {
+                location.reload(); // Recargar la página si el término está vacío
+            }
+        });
+    });
+
+    function openModal(action) {
+        const modal = document.getElementById("modalFormat");
+        const modalTitle = document.getElementById("modalTitle");
+
+        if (action === "import") {
+            modalTitle.textContent = "Seleccione el formato de Importación";
+            modal.setAttribute("data-action", "import");
+        } else if (action === "export") {
+            modalTitle.textContent = "Seleccione el formato de Exportación";
+            modal.setAttribute("data-action", "export");
+        }
+
+        modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+        document.getElementById("modalFormat").classList.add("hidden");
+    }
+
+    function handleAction(format) {
+        const modal = document.getElementById("modalFormat");
+        const action = modal.getAttribute("data-action");
+
+        if (action === "import") {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = getAcceptFormat(format);
+            input.onchange = () => handleImport(input.files[0]);
+            input.click();
+        } else if (action === "export") {
+            const exportUrl = "{% url 'exportar_docentes' 'FORMAT' 'all' %}".replace("FORMAT", format);
+            window.location.href = exportUrl;
+        }
+    }
+
+    function getAcceptFormat(format) {
+        const formats = {
+            csv: ".csv",
+            excel: ".xls,.xlsx",
+            sql: ".sql",
+            json: ".json",
+            xml: ".xml",
+            pdf: ".pdf"
+        };
+        return formats[format] || "";
+    }
+
+    function handleImport(file) {
+        const form = new FormData();
+        form.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+        form.append("file", file);
+
+        fetch("{% url 'cargar_docentes' %}", {
+            method: "POST",
+            body: form
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.text().then(text => alert("Error al importar el archivo: " + text));
+            }
+        })
+        .catch(error => {
+            alert("Hubo un error al procesar el archivo: " + error.message);
+        });
+    }
+
+    document.querySelector(".btn-cancel").addEventListener("click", () => {
+        document.getElementById("modalFormat").classList.add("hidden");
+    });
+
+    document.getElementById("modalFormat").addEventListener("click", (event) => {
+        if (event.target === document.getElementById("modalFormat")) {
+            document.getElementById("modalFormat").classList.add("hidden");
+        }
+    });
+
+    function confirmarEliminacion(docenteId) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/docentes/eliminar/${docenteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Eliminado', 'El docente ha sido eliminado.', 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', data.error || 'No se pudo eliminar el docente.', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error', 'Ocurrió un error al intentar eliminar el docente.', 'error');
+                });
+            }
+        });
+    }
+
+    function mostrarDocente(docenteId) {
+        fetch(`/docentes/detalle/${docenteId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al obtener los datos del docente.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const docenteInfo = document.getElementById('docenteInfo');
+                docenteInfo.innerHTML = `
+                    <p><strong>Nombre:</strong> ${data.nombre}</p>
+                    <p><strong>Apellido:</strong> ${data.apellido}</p>
+                    <p><strong>Correo Electrónico:</strong> ${data.correo}</p>
+                    <p><strong>Teléfono:</strong> ${data.telefono}</p>
+                    <p><strong>Fecha de Ingreso:</strong> ${data.fecha_ingreso}</p>
+                    <p><strong>Contraseña:</strong> ${data.contraseña}</p>
+                    <p><strong>Estado:</strong> ${data.activo ? 'Activo' : 'Inactivo'}</p>
+                `;
+                const modal = document.getElementById('modalDocente');
+                modal.classList.remove('hidden'); // Mostrar el modal
+            })
+            .catch(error => {
+                Swal.fire('Error', 'No se pudo cargar la información del docente.', 'error');
+                console.error(error);
+            });
+    }
+
+    function cerrarModal() {
+        const modal = document.getElementById('modalDocente');
+        modal.classList.add('hidden'); // Ocultar el modal
+    }
+
+    // Asegúrate de que el modal se cierre al hacer clic fuera del contenido
+    document.getElementById('modalDocente').addEventListener('click', (event) => {
+        if (event.target === document.getElementById('modalDocente')) {
+            cerrarModal();
+        }
+    });
+</script>
+{% endblock %}
