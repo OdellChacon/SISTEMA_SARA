@@ -4,8 +4,9 @@ from .models import Materia
 class MateriaForm(forms.ModelForm):
     class Meta:
         model = Materia
-        fields = ['nombre', 'codigo']
+        fields = ['codigo_materia', 'descripcion', 'trayecto']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la materia'}),
-            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código de la materia'}),
+            'codigo_materia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código de la materia'}),
+            'descripcion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descripción'}),
+            'trayecto': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Trayecto'}),
         }

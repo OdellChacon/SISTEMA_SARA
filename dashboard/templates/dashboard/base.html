@@ -94,12 +94,9 @@
                 {% endif %}
                 <li>
                     <i class='bx bx-log-out'></i>
-                    <form action="{% url 'logout' %}" method="post" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" style="background: none; border: none; color: inherit; cursor: pointer;">
-                            <span>Cerrar Sesión</span>
-                        </button>
-                    </form>
+                    <a href="{% url 'logout' %}" id="logout-link" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <span>Cerrar Sesión</span>
+                    </a>
                 </li>
             </ul>
             
@@ -139,6 +136,27 @@
                     }
                 }
             });
+            // Confirmar logout
+            const logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: "Tu sesión será cerrada.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, cerrar sesión',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = logoutLink.href;
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>

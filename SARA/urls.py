@@ -10,6 +10,8 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', include('dashboard.urls')),  # Incluye las URLs del dashboard
     path('docentes/', include('docentes.urls')),
+    path('materias/', include('materias.urls')),
+    path('aulas/', include('aulas.urls')),
     path('clases/', include('clases.urls')),
 ]
 

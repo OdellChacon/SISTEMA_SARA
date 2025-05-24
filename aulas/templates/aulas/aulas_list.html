@@ -41,9 +41,13 @@
             <thead>
                 <tr>
                     <th><input type="checkbox" id="selectAll"></th>
-                    <th>Departamento</th>
-                    <th>Tipo</th>
-                    <th>Número</th>
+                    <th>Código Aula</th>
+                    <th>Descripción</th>
+                    <th>Capacidad</th>
+                    <!-- <th>Ubicación</th> eliminado -->
+                    <th>Estatus</th>
+                    <th>Sede</th>
+                    <th>Serial</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -51,9 +55,13 @@
                 {% for aula in page_obj %}
                 <tr>
                     <td><input type="checkbox" class="aulaCheckbox" value="{{ aula.id }}"></td>
-                    <td>{{ aula.departamento }}</td>
-                    <td>{{ aula.tipo }}</td>
-                    <td>{{ aula.numero }}</td>
+                    <td>{{ aula.codigo_aula }}</td>
+                    <td>{{ aula.descripcion }}</td>
+                    <td>{{ aula.capacidad }}</td>
+                    {# <td>{{ aula.ubicacion }}</td> eliminado #}
+                    <td>{{ aula.estatus }}</td>
+                    <td>{{ aula.sede }}</td>
+                    <td>{{ aula.serial }}</td>
                     <td>
                         <a href="{% url 'editar_aula' aula.id %}" class="btn btn-edit">Editar</a>
                         <button class="btn btn-delete" data-id="{{ aula.id }}">Eliminar</button>
@@ -79,13 +87,35 @@
             </li>
             {% endif %}
 
-            {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% else %}
-            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-            {% endif %}
-            {% endfor %}
+            {# Nueva lógica de paginación compacta compatible con Django #}
+            {% with left=page_obj.number|add:"-2" right=page_obj.number|add:"2" %}
+                {% if left < 1 %}{% with left=1 %}{% endwith %}{% endif %}
+                {% if right > page_obj.paginator.num_pages %}{% with right=page_obj.paginator.num_pages %}{% endwith %}{% endif %}
+
+                {% if left > 1 %}
+                    <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                    {% if left > 2 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num >= left and num <= right %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if right < page_obj.paginator.num_pages %}
+                    {% if right < page_obj.paginator.num_pages|add:"-1" %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a></li>
+                {% endif %}
+            {% endwith %}
 
             {% if page_obj.has_next %}
             <li class="page-item">
@@ -145,11 +175,12 @@
             modal.setAttribute("data-action", "export");
         }
 
-        modal.classList.add("active");
+        // Cambiar aquí: usar 'hidden'
+        modal.classList.remove("hidden");
     }
 
     function closeModal() {
-        document.getElementById("modalFormat").classList.remove("active");
+        document.getElementById("modalFormat").classList.add("hidden");
     }
 
     function handleAction(format) {

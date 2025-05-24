@@ -28,7 +28,7 @@
         <select id="filter-aula" class="filter-select dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg p-2 w-full">
             <option value="">Todas</option>
             {% for aula in aulas %}
-            <option value="{{ aula.id }}">{{ aula.tipo }} {{ aula.numero }} - {{ aula.departamento }}</option>
+            <option value="{{ aula.id }}">{{ aula.codigo_aula }} - {{ aula.descripcion }}</option>
             {% endfor %}
         </select>
     </div>

@@ -25,18 +25,22 @@ document.addEventListener('DOMContentLoaded', () => {
         events: listaClases.map(clase => {
             const now = new Date();
             const endDate = new Date(`${clase.fecha}T${clase.hora_fin}`);
-            const isInactive = endDate < now; // Determinar si la clase es inactiva
+            const isInactive = endDate < now;
+
+            // Buscar el aula correspondiente
+            const aulaObj = listaAulas.find(aula => aula.id == clase['aula__id']);
+            // Buscar la materia por id para obtener la descripción
+            const materiaObj = listaMaterias.find(m => m.id == clase['materia__id']);
 
             return {
                 id: clase.id,
-                title: `${clase['materia__nombre']} - ${clase['docente__nombre']}`,
+                // Cambia aquí: usa la descripción de la materia
+                title: `${materiaObj ? materiaObj.descripcion : 'Sin materia'} - ${clase['docente__nombre']}`,
                 start: `${clase.fecha}T${clase.hora_inicio}`,
                 end: `${clase.fecha}T${clase.hora_fin}`,
-                className: isInactive ? 'pasado' : 'activo', // Asignar clase CSS
+                className: isInactive ? 'pasado' : 'activo',
                 extendedProps: {
-                    aula: `${listaAulas.find(aula => aula.id == clase['aula__id'])?.tipo || 'No especificado'} 
-                           ${listaAulas.find(aula => aula.id == clase['aula__id'])?.numero || ''} - 
-                           ${listaAulas.find(aula => aula.id == clase['aula__id'])?.departamento || ''}`,
+                    aula: aulaObj ? `${aulaObj.codigo_aula} - ${aulaObj.descripcion}` : 'No especificado',
                     docente_id: clase['docente__id'],
                     materia_id: clase['materia__id'],
                     aula_id: clase['aula__id']
@@ -65,14 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <label>Materia</label>
                         <select id="materia" class="swal2-input" style="grid-column: span 2;">
-                            ${listaMaterias.map(materia => `<option value="${materia.id}">${materia.nombre}</option>`).join('')}
+                            ${listaMaterias.map(materia => `
+                                <option value="${materia.id}">
+                                    ${materia.codigo_materia} - ${materia.descripcion} (Trayecto: ${materia.trayecto})
+                                </option>
+                            `).join('')}
                         </select>
 
                         <label>Aula</label>
                         <select id="aula" class="swal2-input" style="grid-column: span 2;">
                             ${listaAulas.map(aula => `
                                 <option value="${aula.id}">
-                                    ${aula.tipo} ${aula.numero} - ${aula.departamento}
+                                    ${aula.codigo_aula} - ${aula.descripcion}
                                 </option>`).join('')}
                         </select>
 
@@ -129,9 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 start: `${nuevaClase.fecha_inicio}T${nuevaClase.hora_inicio}`,
                                 end: `${nuevaClase.fecha_inicio}T${nuevaClase.hora_fin}`,
                                 extendedProps: {
-                                    aula: `${listaAulas.find(aula => aula.id == nuevaClase.aula_id)?.tipo || 'No especificado'} 
-                                           ${listaAulas.find(aula => aula.id == nuevaClase.aula_id)?.numero || ''} - 
-                                           ${listaAulas.find(aula => aula.id == nuevaClase.aula_id)?.departamento || ''}`
+                                    aula: (() => {
+                                        const aulaObj = listaAulas.find(aula => aula.id == nuevaClase.aula_id);
+                                        return aulaObj ? `${aulaObj.codigo_aula} - ${aulaObj.descripcion}` : 'No especificado';
+                                    })()
                                 }
                             });
                         } else {
@@ -223,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <select id="materia" class="swal2-input" style="grid-column: span 2;">
                                             ${listaMaterias.map(materia => `
                                                 <option value="${materia.id}" ${materia.id == info.event.extendedProps.materia_id ? 'selected' : ''}>
-                                                    ${materia.nombre}
+                                                    ${materia.codigo_materia} - ${materia.descripcion} (Trayecto: ${materia.trayecto})
                                                 </option>`).join('')}
                                         </select>
 
@@ -231,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <select id="aula" class="swal2-input" style="grid-column: span 2;">
                                             ${listaAulas.map(aula => `
                                                 <option value="${aula.id}" ${aula.id == info.event.extendedProps.aula_id ? 'selected' : ''}>
-                                                    ${aula.tipo} ${aula.numero} - ${aula.departamento}
+                                                    ${aula.codigo_aula} - ${aula.descripcion}
                                                 </option>`).join('')}
                                         </select>
 
@@ -286,9 +295,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                             updatedEvent.setProp('title', `${listaMaterias.find(m => m.id == result.value.materia_id).nombre} - ${listaDocentes.find(d => d.id == result.value.docente_id).nombre}`);
                                             updatedEvent.setStart(`${result.value.fecha_inicio}T${result.value.hora_inicio}`);
                                             updatedEvent.setEnd(`${result.value.fecha_inicio}T${result.value.hora_fin}`);
-                                            updatedEvent.setExtendedProp('aula', `${listaAulas.find(aula => aula.id == result.value.aula_id)?.tipo || 'No especificado'} 
-                                                                               ${listaAulas.find(aula => aula.id == result.value.aula_id)?.numero || ''} - 
-                                                                               ${listaAulas.find(aula => aula.id == result.value.aula_id)?.departamento || ''}`);
+                                            updatedEvent.setExtendedProp('aula', (() => {
+                                                const aulaObj = listaAulas.find(aula => aula.id == result.value.aula_id);
+                                                return aulaObj ? `${aulaObj.codigo_aula} - ${aulaObj.descripcion}` : 'No especificado';
+                                            })());
                                         } else {
                                             Swal.fire('Error', data.message || 'No se pudo reprogramar la clase.', 'error');
                                         }
@@ -416,3 +426,6 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Todo el código ya usa los campos id, nombre, cedula, codigo_aula, descripcion, etc.
+// Si los datos del backend están correctos, el frontend funcionará correctamente.

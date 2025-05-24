@@ -1,23 +1,14 @@
 from django.db import models
 
 class Aula(models.Model):
-    DEPARTAMENTO_CHOICES = [
-        ('Agroalimentación', 'Agroalimentación'),
-        ('Construcción Civil', 'Construcción Civil'),
-        ('Electricidad', 'Electricidad'),
-        ('Informática', 'Informática'),
-        ('Ingeniería de Mantenimiento', 'Ingeniería de Mantenimiento'),
-        ('Mecánica', 'Mecánica'),
-        ('Procesamiento y Control de Alimentos', 'Procesamiento y Control de Alimentos'),
-    ]
-    TIPO_CHOICES = [
-        ('Aula', 'Aula'),
-        ('Laboratorio', 'Laboratorio'),
-    ]
 
-    departamento = models.CharField(max_length=50, choices=DEPARTAMENTO_CHOICES)
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
-    numero = models.PositiveIntegerField()
+    codigo_aula = models.CharField(max_length=30)  # Quitar unique=True
+    descripcion = models.CharField(max_length=255, blank=True)
+    capacidad = models.PositiveIntegerField()
+    estatus = models.CharField(max_length=30)
+    sede = models.CharField(max_length=50)
+    serial = models.CharField(max_length=50, blank=True)
+
 
     def __str__(self):
-        return f"{self.tipo} {self.numero} - {self.departamento}"
+        return f"{self.codigo_aula} - {self.descripcion}"

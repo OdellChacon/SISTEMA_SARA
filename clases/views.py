@@ -5,7 +5,7 @@ from materias.models import Materia
 from aulas.models import Aula
 from django.utils.timezone import now, localtime, make_aware
 from django.core.paginator import Paginator
-from datetime import date, time, datetime  # ✅ Importar datetime para convertir cadenas ISO a objetos de fecha
+from datetime import date, time, datetime
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 import json
 
@@ -17,9 +17,11 @@ def verificar_incumplimientos():
             Incumplimiento.objects.get_or_create(clase=clase, docente=clase.docente)
 
 def calendario(request):
-    docentes = Docente.objects.all().values('id', 'nombre', 'cedula')
-    materias = Materia.objects.all().values('id', 'nombre')
-    aulas = Aula.objects.all().values('id', 'tipo', 'numero', 'departamento')
+    # Adaptar a los nuevos modelos: obtener campos relevantes
+    docentes = Docente.objects.filter(rol=2).values('id', 'nombre', 'cedula')
+    # Cambiar aquí: usar los campos correctos de Materia
+    materias = Materia.objects.all().values('id', 'codigo_materia', 'descripcion', 'trayecto')
+    aulas = Aula.objects.all().values('id', 'codigo_aula', 'descripcion')  # Solo estos campos
 
     if request.user.is_superuser or request.user.is_staff:
         clases = Clase.objects.all()
@@ -32,42 +34,17 @@ def calendario(request):
             'fecha': clase.fecha.isoformat() if clase.fecha else None,
             'hora_inicio': clase.hora_inicio.isoformat() if clase.hora_inicio else None,
             'hora_fin': clase.hora_fin.isoformat() if clase.hora_fin else None,
-            'materia__nombre': clase.materia.nombre,
+            'materia__descripcion': clase.materia.descripcion,  # Cambiado aquí
             'materia__id': clase.materia.id,
             'docente__nombre': clase.docente.nombre,
             'docente__id': clase.docente.id,
             'aula__id': clase.aula.id,
-            # ...otros campos si necesitas...
         })
-    context = {
-        # ...otros datos...
-        'clases_json': json.dumps(clases_list),
-        # ...otros datos...
-    }
-
+    # Serialización para JS
     docentes_json = json.dumps(list(docentes))
     materias_json = json.dumps(list(materias))
     aulas_json = json.dumps(list(aulas))
-    # Serialización manual para fechas y horas
-    clases_json = json.dumps([
-        {
-            **c,
-            'fecha': c['fecha'].isoformat() if c['fecha'] else None,
-            'hora_inicio': c['hora_inicio'].isoformat() if c['hora_inicio'] else None,
-            'hora_fin': c['hora_fin'].isoformat() if c['hora_fin'] else None,
-        }
-        for c in clases.values(
-            'id', 
-            'materia__id', 
-            'materia__nombre', 
-            'docente__id', 
-            'docente__nombre', 
-            'aula__id', 
-            'fecha', 
-            'hora_inicio', 
-            'hora_fin'
-        )
-    ])
+    clases_json = json.dumps(clases_list)
 
     return render(request, 'clases/calendario.html', {
         'docentes_json': docentes_json,

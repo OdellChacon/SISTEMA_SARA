@@ -4,4 +4,7 @@ from .models import Aula
 class AulaForm(forms.ModelForm):
     class Meta:
         model = Aula
-        fields = ['departamento', 'tipo', 'numero']
+        fields = [
+            'codigo_aula', 'descripcion', 'capacidad',
+            'estatus', 'sede', 'serial'
+        ]

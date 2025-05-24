@@ -50,11 +50,44 @@ def eliminar_aula(request, aula_id):
 def importar_aulas(request):
     if request.method == 'POST' and request.FILES.get('file'):
         file = request.FILES['file']
-        reader = csv.reader(file.read().decode('utf-8').splitlines())
-        next(reader)  # Saltar encabezado
-        for row in reader:
-            Aula.objects.create(departamento=row[0], tipo=row[1], numero=row[2])
-        return JsonResponse({'success': True})
+        filename = file.name.lower()
+        def safe_value(val, dash=False):
+            if val is None or str(val).strip() == '' or str(val).lower() == 'null':
+                return '-' if dash else ''
+            return str(val)
+        if filename.endswith('.csv'):
+            reader = csv.DictReader(file.read().decode('utf-8').splitlines())
+            for row in reader:
+                Aula.objects.create(
+                    codigo_aula=safe_value(row.get('codigo_aula'), dash=True),
+                    descripcion=safe_value(row.get('descripcion')),
+                    capacidad=int(row.get('capacidad') or 0),
+                    estatus=safe_value(row.get('estatus'), dash=True),
+                    sede=safe_value(row.get('sede'), dash=True),
+                    serial=safe_value(row.get('serial'))
+                )
+            return JsonResponse({'success': True})
+        elif filename.endswith('.xlsx'):
+            import openpyxl
+            wb = openpyxl.load_workbook(file)
+            ws = wb.active
+            headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+            idx = {h: i for i, h in enumerate(headers)}
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                def get(h, dash=False):
+                    v = row[idx[h]] if h in idx and idx[h] < len(row) else None
+                    return safe_value(v, dash)
+                Aula.objects.create(
+                    codigo_aula=get('codigo_aula', dash=True),
+                    descripcion=get('descripcion'),
+                    capacidad=int(get('capacidad') or 0),
+                    estatus=get('estatus', dash=True),
+                    sede=get('sede', dash=True),
+                    serial=get('serial')
+                )
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'message': 'Formato de archivo no soportado'}, status=400)
     return JsonResponse({'success': False, 'message': 'Archivo no válido'}, status=400)
 
 def exportar_aulas(request, format, scope):
@@ -64,12 +97,41 @@ def exportar_aulas(request, format, scope):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="aulas.csv"'
         writer = csv.writer(response)
-        writer.writerow(['Departamento', 'Tipo', 'Número'])
+        writer.writerow(['codigo_aula', 'descripcion', 'capacidad', 'estatus', 'sede', 'serial'])
         for aula in aulas:
-            writer.writerow([aula.departamento, aula.tipo, aula.numero])
+            writer.writerow([
+                aula.codigo_aula,
+                aula.descripcion,
+                aula.capacidad,
+                aula.estatus,
+                aula.sede,
+                aula.serial
+            ])
         return response
 
-    # Agregar lógica para otros formatos si es necesario
+    elif format == "excel":
+        import openpyxl
+        from openpyxl.utils import get_column_letter
+        from openpyxl.writer.excel import save_virtual_workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(['codigo_aula', 'descripcion', 'capacidad', 'estatus', 'sede', 'serial'])
+        for aula in aulas:
+            ws.append([
+                aula.codigo_aula,
+                aula.descripcion,
+                aula.capacidad,
+                aula.estatus,
+                aula.sede,
+                aula.serial
+            ])
+        response = HttpResponse(
+            save_virtual_workbook(wb),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="aulas.xlsx"'
+        return response
+
     return JsonResponse({'success': False, 'message': 'Formato no soportado'}, status=400)
 
 @csrf_exempt
@@ -86,3 +148,5 @@ def obtener_todos_los_ids(request):
         ids = list(Aula.objects.values_list('id', flat=True))
         return JsonResponse({'ids': ids})
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+# No se realiza ninguna validación de unicidad ni búsqueda por 'codigo_aula', por lo tanto, no es necesario modificar nada.

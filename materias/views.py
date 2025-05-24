@@ -58,9 +58,23 @@ def importar_materias(request):
     if request.method == 'POST' and request.FILES.get('file'):
         file = request.FILES['file']
         reader = csv.reader(file.read().decode('utf-8').splitlines())
-        next(reader)  # Saltar encabezado
+        header = next(reader)
+        # Buscar los índices de las columnas requeridas
+        try:
+            idx_codigo = header.index('codigo_materia')
+            idx_desc = header.index('descripcion')
+            idx_trayecto = header.index('trayecto')
+        except ValueError:
+            return JsonResponse({'success': False, 'message': 'El archivo debe tener las columnas: codigo_materia, descripcion, trayecto'}, status=400)
         for row in reader:
-            Materia.objects.create(nombre=row[0], codigo=row[1])
+            # Solo importar si hay suficientes columnas
+            if len(row) <= max(idx_codigo, idx_desc, idx_trayecto):
+                continue
+            Materia.objects.create(
+                codigo_materia=row[idx_codigo],
+                descripcion=row[idx_desc],
+                trayecto=row[idx_trayecto]
+            )
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'message': 'Archivo no válido'}, status=400)
 
@@ -72,9 +86,9 @@ def exportar_materias(request, format, scope):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="materias.csv"'
         writer = csv.writer(response)
-        writer.writerow(['Nombre', 'Código'])
+        writer.writerow(['codigo_materia', 'descripcion', 'trayecto'])
         for materia in materias:
-            writer.writerow([materia.nombre, materia.codigo])
+            writer.writerow([materia.codigo_materia, materia.descripcion, materia.trayecto])
         return response
 
     # Aquí puedes agregar soporte a otros formatos: json, xml, etc.
@@ -101,8 +115,21 @@ def obtener_todos_los_ids(request):
 def buscar_materias(request):
     query = request.GET.get('q', '').strip()
     if query:
-        materias = Materia.objects.filter(nombre__icontains=query) | Materia.objects.filter(codigo__icontains(query))
-        results = [{'id': materia.id, 'nombre': materia.nombre, 'codigo': materia.codigo} for materia in materias]
+        materias = Materia.objects.filter(
+            codigo_materia__icontains=query
+        ) | Materia.objects.filter(
+            descripcion__icontains=query
+        ) | Materia.objects.filter(
+            trayecto__icontains=query
+        )
+        results = [
+            {
+                'id': materia.id,
+                'codigo_materia': materia.codigo_materia,
+                'descripcion': materia.descripcion,
+                'trayecto': materia.trayecto
+            } for materia in materias
+        ]
     else:
         results = []
     return JsonResponse({'results': results})

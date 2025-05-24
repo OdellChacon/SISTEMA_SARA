@@ -16,7 +16,7 @@ urlpatterns = [
 
     path("exportar/<str:formato>/<str:tipo>/", exportar_docentes, name="exportar_docentes"),
     path("cargar_docentes/", views.cargar_docentes, name="cargar_docentes"),
-    path("eliminar_seleccionados/", views.eliminar_seleccionados, name="eliminar_seleccionados"),
+    path("eliminar_seleccionados/", views.eliminar_seleccionados_docentes, name="eliminar_seleccionados"),
     path("obtener_todos_los_ids/", views.obtener_todos_los_ids_docentes, name="obtener_todos_los_ids_docentes"),
     path('detalle/<int:docente_id>/', views.detalle_docente, name='detalle_docente'),
     path('buscar/', buscar_docentes, name='buscar_docentes'),

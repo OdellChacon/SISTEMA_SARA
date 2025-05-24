@@ -15,20 +15,16 @@
 
             <div class="form-grid gap-6">
                 <div class="input-group">
+                    <label for="id_id" class="font-semibold text-gray-700 dark:text-gray-200">ID</label>
+                    {{ form.id }}
+                </div>
+                <div class="input-group">
                     <label for="id_nombre" class="font-semibold text-gray-700 dark:text-gray-200">Nombre</label>
                     {{ form.nombre }}
                 </div>
                 <div class="input-group">
                     <label for="id_apellido" class="font-semibold text-gray-700 dark:text-gray-200">Apellido</label>
                     {{ form.apellido }}
-                </div>
-                <div class="input-group">
-                    <label for="id_correo" class="font-semibold text-gray-700 dark:text-gray-200">Correo Electrónico</label>
-                    {{ form.correo }}
-                </div>
-                <div class="input-group">
-                    <label for="id_telefono" class="font-semibold text-gray-700 dark:text-gray-200">Teléfono</label>
-                    {{ form.telefono }}
                 </div>
                 <div class="input-group">
                     <label for="id_cedula" class="font-semibold text-gray-700 dark:text-gray-200">Cédula</label>
@@ -40,14 +36,6 @@
                         <option value="True" {% if form.activo.value %}selected{% endif %}>Activo</option>
                         <option value="False" {% if not form.activo.value %}selected{% endif %}>Inactivo</option>
                     </select>
-                </div>
-                <div class="input-group">
-                    <label for="id_cedula" class="font-semibold text-gray-700 dark:text-gray-200">Contraseña</label>
-                    {{ form.password1 }}
-                </div>
-                <div class="input-group">
-                    <label for="id_cedula" class="font-semibold text-gray-700 dark:text-gray-200">Verifica la Contraseña</label>
-                    {{ form.password2 }}
                 </div>
             </div>
 

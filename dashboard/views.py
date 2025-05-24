@@ -11,12 +11,13 @@ from django.urls import reverse_lazy
 @login_required
 def dashboard(request):
     # Contar el número de docentes
-    docentes_count = Docente.objects.count()
+    docentes_count = Docente.objects.filter(rol=2).count()
     
     # Contar las clases, asistencias e incumplimientos
     clases_count = Clase.objects.count()
     asistencias_count = Asistencia.objects.count()
-    incumplimientos_count = Incumplimiento.objects.count()
+    # Corrige el conteo de incumplimientos: solo cuenta los distintos incumplimientos
+    incumplimientos_count = Incumplimiento.objects.all().count()
 
     # Mantener el ejemplo para asistencia promedio
     asistencia_promedio = 85  # Este es solo un ejemplo

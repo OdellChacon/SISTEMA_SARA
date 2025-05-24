@@ -47,6 +47,7 @@
                 <thead>
                     <tr>
                         <th><input type="checkbox" id="selectAll"></th>
+                        <th>ID</th>
                         <th>Nombre</th>
                         <th>Apellido</th>
                         <th>Cédula</th>
@@ -58,6 +59,7 @@
                     {% for docente in docentes %}
                     <tr>
                         <td><input type="checkbox" class="docenteCheckbox" value="{{ docente.id }}"></td>
+                        <td>{{ docente.id }}</td>
                         <td>{{ docente.nombre }}</td>
                         <td>{{ docente.apellido }}</td>
                         <td>{{ docente.cedula }}</td>
@@ -94,12 +96,31 @@
                 </li>
                 {% endif %}
 
+                {# Compact pagination: show first 2, last 2, and 2 around current #}
                 {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% else %}
-                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                {% endif %}
+                    {% if num <= 2 %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% elif num == 3 and page_obj.number > 5 %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% elif num == page_obj.paginator.num_pages|add:"-2" and page_obj.number < page_obj.paginator.num_pages|add:"-4" %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% elif num > page_obj.paginator.num_pages|add:"-2" %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
@@ -213,7 +234,7 @@
             if (!allSelected) {
                 fetch('/docentes/obtener_todos_los_ids/')
                     .then(response => response.json())
-                    .then(data => {
+                    .then data => {
                         if (data.ids) {
                             allSelectedIds = new Set(data.ids);
                             docenteCheckboxes.forEach(checkbox => {
@@ -287,24 +308,20 @@
                             data.results.forEach(docente => {
                                 const row = `
                                     <tr>
-                                        <td><input type="checkbox" class="docenteCheckbox" value="${docente.id}"></td>
+                                        <td><input type="checkbox" class="docenteCheckbox" value="${docente.cedula}"></td>
+                                        <td><!-- ID omitido --></td>
                                         <td>${docente.nombre}</td>
                                         <td>${docente.apellido}</td>
-                                        <td>${docente.correo}</td>
-                                        <td>${docente.fecha_ingreso}</td>
+                                        <td>${docente.cedula}</td>
+                                        <td>${docente.activo ? 'Activo' : 'Inactivo'}</td>
                                         <td>
-                                            <span class="status ${docente.activo ? 'active' : 'inactive'}" style="color: ${docente.activo ? 'green' : 'red'};">
-                                                ${docente.activo ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="/docentes/detalle/${docente.id}" class="btn btn-view" title="Ver">
+                                            <a href="/docentes/detalle/${docente.cedula}" class="btn btn-view" title="Ver">
                                                 <i class="bx bx-show"></i>
                                             </a>
-                                            <a href="/docentes/editar/${docente.id}" class="btn btn-edit" title="Editar">
+                                            <a href="/docentes/editar/${docente.cedula}" class="btn btn-edit" title="Editar">
                                                 <i class="bx bx-edit"></i>
                                             </a>
-                                            <button class="btn btn-delete" onclick="confirmarEliminacion(${docente.id})" title="Eliminar">
+                                            <button class="btn btn-delete" onclick="confirmarEliminacion('${docente.cedula}')" title="Eliminar">
                                                 <i class="bx bx-trash"></i>
                                             </button>
                                         </td>

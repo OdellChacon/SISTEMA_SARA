@@ -1,6 +1,5 @@
 from django.urls import path, include
 from django.contrib import admin
-from django.contrib.auth.views import LogoutView  # Importar LogoutView
 from . import views
 from .views import CustomLoginView
 from SARA.views import login_view
@@ -13,6 +12,5 @@ urlpatterns = [
     path('admin_dash/', views.dashboard, name='admin_dashboard'),  # Dashboard de administradores
     path('doc_dash/', views.dashboard_docente, name='dashboard_docente'),  # Dashboard de docentes
     path('configuracion/', views.configuracion, name='configuracion'),
-    path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),  # Redirigir al login después de cerrar sesión
     path('', login_view, name='login'),
 ]

@@ -7,24 +7,25 @@ from docentes.models import BaseUser, Docente, Administrador
 def login_view(request):
     login_error = False
     inactive_error = False
+    must_login = request.GET.get('next') is not None  # Detecta si viene de una redirección por login_required
 
     if request.method == 'POST':
         print("Método POST recibido")  # Depuración
         form = EmailAuthenticationForm(request, data=request.POST)
         if form.is_valid():
             print("Formulario válido")  # Depuración
-            correo = form.cleaned_data['username']
+            cedula = form.cleaned_data['username']  # Ahora username es la cédula
             password = form.cleaned_data['password']
-            print(f"Datos recibidos: correo={correo}, password={password}")  # Depuración
-            user = authenticate(request, username=correo, password=password)
+            print(f"Datos recibidos: cedula={cedula}, password={password}")  # Depuración
+            user = authenticate(request, username=cedula, password=password)
             if user:
-                print(f"Usuario autenticado: {getattr(user, 'correo', '')}")  # Depuración
+                print(f"Usuario autenticado: {getattr(user, 'cedula', '')}")  # Depuración
                 if not user.activo:
                     print("Usuario inactivo")  # Depuración
                     inactive_error = True
                 else:
                     login(request, user)
-                    print(f"Usuario logueado: {getattr(user, 'correo', '')}")  # Depuración
+                    print(f"Usuario logueado: {getattr(user, 'cedula', '')}")  # Depuración
                     # Redirigir según el tipo de usuario
                     if isinstance(user, Docente):
                         print("Redirigiendo a clases/calendario.html")  # Depuración
@@ -46,6 +47,7 @@ def login_view(request):
         'form': form,
         'login_error': login_error,
         'inactive_error': inactive_error,
+        'must_login': must_login,  # Pasa la variable al template
     })
 
 def logout_view(request):

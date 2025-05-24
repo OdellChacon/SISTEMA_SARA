@@ -410,9 +410,8 @@ function mostrarDocente(docenteId) {
             docenteInfo.innerHTML = `
                 <p><strong>Nombre:</strong> ${data.nombre}</p>
                 <p><strong>Apellido:</strong> ${data.apellido}</p>
-                <p><strong>Correo:</strong> ${data.correo}</p>
+                <p><strong>Cédula:</strong> ${data.cedula}</p>
                 <p><strong>Teléfono:</strong> ${data.telefono}</p>
-                <p><strong>Fecha de Ingreso:</strong> ${data.fecha_ingreso}</p>
                 <p><strong>Estado:</strong> ${data.activo ? "Activo" : "Inactivo"}</p>
             `;
             // Mostrar el modal
@@ -428,3 +427,52 @@ function cerrarModal() {
     const modal = document.getElementById("modalDocente");
     modal.classList.add("hidden");
 }
+
+// Implementación de la barra de búsqueda dinámica en el cliente
+const searchInput = document.getElementById('searchInput');
+const tableBody = document.querySelector('#docentesTable tbody');
+
+searchInput.addEventListener('input', () => {
+    const searchTerm = searchInput.value.trim();
+
+    if (searchTerm.length > 0) {
+        fetch(`/docentes/buscar/?q=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                tableBody.innerHTML = ''; // Limpiar la tabla
+                if (data.results.length > 0) {
+                    data.results.forEach(docente => {
+                        const row = `
+                            <tr>
+                                <td><input type="checkbox" class="docenteCheckbox" value="${docente.cedula}"></td>
+                                <td><!-- ID eliminado --></td>
+                                <td>${docente.nombre}</td>
+                                <td>${docente.apellido}</td>
+                                <td>${docente.cedula}</td>
+                                <td>${docente.activo ? 'Activo' : 'Inactivo'}</td>
+                                <td>
+                                    <a href="/docentes/detalle/${docente.cedula}" class="btn btn-view" title="Ver">
+                                        <i class="bx bx-show"></i>
+                                    </a>
+                                    <a href="/docentes/editar/${docente.cedula}" class="btn btn-edit" title="Editar">
+                                        <i class="bx bx-edit"></i>
+                                    </a>
+                                    <button class="btn btn-delete" onclick="confirmarEliminacion('${docente.cedula}')" title="Eliminar">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tableBody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron resultados</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error al buscar:', error);
+            });
+    } else {
+        location.reload(); // Recargar la página si el término está vacío
+    }
+});
