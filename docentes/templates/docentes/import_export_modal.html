@@ -1,0 +1,40 @@
+<div id="importModal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Importar Datos</h2>
+        <p>Selecciona un formato para importar:</p>
+        <div class="btn-group">
+            <button class="btn btn-import" onclick="selectImportFormat('excel')"><i class="bx bx-file"></i> Excel</button>
+            <button class="btn btn-import" onclick="selectImportFormat('csv')"><i class="bx bx-file"></i> CSV</button>
+            <button class="btn btn-import" onclick="selectImportFormat('sql')"><i class="bx bx-file"></i> SQL</button>
+        </div>
+        <form id="importForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" id="fileInput" name="file" style="display: none;">
+            <div class="btn-group">
+                <button type="submit" class="btn btn-green"><i class="bx bx-upload"></i> Subir Archivo</button>
+                <button type="button" class="btn btn-red" onclick="closeModal('importModal')"><i class="bx bx-x"></i> Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="exportModal" class="modal hidden">
+    <div class="modal-content">
+        <h2>Exportar Datos</h2>
+        <p>Selecciona un formato para exportar:</p>
+        <div class="btn-group">
+            <button class="btn btn-export" onclick="exportData('excel')">
+                <i class="bx bx-download"></i> Excel
+            </button>
+            <button class="btn btn-export" onclick="exportData('csv')">
+                <i class="bx bx-download"></i> CSV
+            </button>
+            <button class="btn btn-export" onclick="exportData('sql')">
+                <i class="bx bx-download"></i> SQL
+            </button>            
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-red" onclick="closeModal('exportModal')"><i class="bx bx-x"></i> Cancelar</button>
+        </div>
+    </div>
+</div>

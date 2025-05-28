@@ -1,0 +1,27 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="container mt-5" style="max-width: 400px;">
+    <h2 class="mb-4 text-center">Iniciar sesión</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if login_error %}
+            <div class="alert alert-danger">Correo o contraseña incorrectos.</div>
+        {% endif %}
+        {% if inactive_error %}
+            <div class="alert alert-warning">Tu cuenta está inactiva.</div>
+        {% endif %}
+        {{ form.non_field_errors }}
+        <div class="mb-3">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {{ form.username.errors }}
+        </div>
+        <div class="mb-3">
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            {{ form.password.errors }}
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+    </form>
+</div>
+{% endblock %}
