@@ -68,8 +68,8 @@ ROOT_URLCONF = 'SARA.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,  # Esto le dice a Django que busque plantillas dentro de las aplicaciones
+        'DIRS': [BASE_DIR / 'templates'],  # <-- Agrega esta línea
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
