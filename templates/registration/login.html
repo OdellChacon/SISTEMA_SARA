@@ -1,27 +1,41 @@
-{% extends 'dashboard/base.html' %}
+{% extends 'base_login.html' %}
+{% load widget_tweaks %}
 {% block content %}
-<div class="container mt-5" style="max-width: 400px;">
-    <h2 class="mb-4 text-center">Iniciar sesión</h2>
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {% if login_error %}
-            <div class="alert alert-danger">Correo o contraseña incorrectos.</div>
-        {% endif %}
-        {% if inactive_error %}
-            <div class="alert alert-warning">Tu cuenta está inactiva.</div>
-        {% endif %}
-        {{ form.non_field_errors }}
-        <div class="mb-3">
-            {{ form.username.label_tag }}
-            {{ form.username }}
-            {{ form.username.errors }}
-        </div>
-        <div class="mb-3">
-            {{ form.password.label_tag }}
-            {{ form.password }}
-            {{ form.password.errors }}
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Entrar</button>
-    </form>
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+        <h2 class="mb-6 text-2xl font-bold text-center text-gray-800">Iniciar sesión</h2>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if login_error %}
+                <div class="mb-4 px-4 py-2 rounded bg-red-100 text-red-700 text-sm">Correo o contraseña incorrectos.</div>
+            {% endif %}
+            {% if inactive_error %}
+                <div class="mb-4 px-4 py-2 rounded bg-yellow-100 text-yellow-700 text-sm">Tu cuenta está inactiva.</div>
+            {% endif %}
+            {{ form.non_field_errors }}
+            <div class="mb-4">
+                {{ form.username.label_tag }}
+                {{ form.username|add_class:"w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" }}
+                {{ form.username.errors }}
+            </div>
+            <div class="mb-6">
+                {{ form.password.label_tag }}
+                {{ form.password|add_class:"w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" }}
+                {{ form.password.errors }}
+            </div>
+            <button type="submit" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition">Entrar</button>
+        </form>
+    </div>
 </div>
+{% if must_login %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    Swal.fire({
+        icon: 'info',
+        title: 'Debes iniciar sesión',
+        text: 'Por favor, inicia sesión para acceder a este contenido.',
+        confirmButtonText: 'Aceptar'
+    });
+</script>
+{% endif %}
 {% endblock %}

@@ -381,35 +381,29 @@ document.addEventListener('DOMContentLoaded', () => {
     calendar.render();
     console.log("✅ Calendario cargado correctamente");
 
-    const filterDocente = document.getElementById('filter-docente');
-    const filterMateria = document.getElementById('filter-materia');
-    const filterAula = document.getElementById('filter-aula');
     const filterEstado = document.getElementById('filter-estado');
 
     function applyFilters() {
-        const docenteId = filterDocente.value;
-        const materiaId = filterMateria.value;
-        const aulaId = filterAula.value;
         const estado = filterEstado.value;
+        const now = new Date();
 
         calendar.getEvents().forEach(event => {
-            const isDocenteMatch = !docenteId || event.extendedProps.docente_id == docenteId;
-            const isMateriaMatch = !materiaId || event.extendedProps.materia_id == materiaId;
-            const isAulaMatch = !aulaId || event.extendedProps.aula_id == aulaId;
-
-            const now = new Date();
-            const isEstadoMatch =
-                !estado ||
-                (estado === 'finalizadas' && new Date(event.end) < now) ||
-                (estado === 'por-ver' && new Date(event.start) > now);
-
-            event.setProp('display', isDocenteMatch && isMateriaMatch && isAulaMatch && isEstadoMatch ? '' : 'none');
+            let mostrar = true;
+            if (estado === 'finalizadas') {
+                // Mostrar solo si la hora de fin ya pasó
+                mostrar = event.end && (event.end < now);
+            } else if (estado === 'por-ver') {
+                // Mostrar solo si la hora de inicio es futura o igual a ahora
+                mostrar = event.start && (event.start > now);
+            }
+            event.setProp('display', (!estado || mostrar) ? '' : 'none');
         });
     }
 
-    [filterDocente, filterMateria, filterAula, filterEstado].forEach(filter => {
-        filter.addEventListener('change', applyFilters);
-    });
+    filterEstado.addEventListener('change', applyFilters);
+
+    // Aplica el filtro al cargar la página
+    calendar.on('eventsSet', applyFilters);
 });
 
 function getCookie(name) {
