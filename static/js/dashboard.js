@@ -12,11 +12,21 @@ function applyTheme() {
         dashboard.classList.add("dark");
         sidebar.classList.add("dark"); // Asegurar que el sidebar también cambie
         themeIcon.classList.replace("bx-moon", "bx-sun");
+
+        // Actualizar filtros al modo oscuro
+        document.querySelectorAll(".filter-select").forEach(select => {
+            select.classList.add("dark:bg-gray-700", "dark:text-gray-300", "dark:border-gray-600");
+        });
     } else {
         body.classList.remove("dark");
         dashboard.classList.remove("dark");
         sidebar.classList.remove("dark");
         themeIcon.classList.replace("bx-sun", "bx-moon");
+
+        // Actualizar filtros al modo claro
+        document.querySelectorAll(".filter-select").forEach(select => {
+            select.classList.remove("dark:bg-gray-700", "dark:text-gray-300", "dark:border-gray-600");
+        });
     }
 
     // Aplicar el cambio de color en los gráficos
@@ -27,7 +37,6 @@ function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
     sidebar.classList.toggle("collapsed");
 }
-
 
 function toggleTheme() {
     isDarkMode = !isDarkMode;
@@ -49,6 +58,23 @@ function updateChartColors(isDarkMode) {
     // Actualizar los gráficos para reflejar los cambios
     chartClases.update();
     chartCumplimiento.update();
+}
+
+function logoutUser() {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Tu sesión será cerrada.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, cerrar sesión',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "{% url 'logout' %}";
+        }
+    });
 }
 
 // Aplicar el tema correcto al cargar la página
@@ -137,4 +163,62 @@ document.addEventListener("DOMContentLoaded", function () {
     // Crear los gráficos y almacenarlos en variables
     chartClases = new Chart(document.getElementById('clasesChart'), configClases);
     chartCumplimiento = new Chart(document.getElementById('cumplimientoChart'), configCumplimiento);
+});
+
+function confirmLogout() {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Tu sesión será cerrada.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, cerrar sesión',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Enviar el formulario de logout
+            document.getElementById('logout-form').submit();
+        }
+    });
+}
+
+const container = document.querySelector('.container');
+const registerBtn = document.querySelector('.register-btn');
+const loginBtn = document.querySelector('.login-btn');
+
+registerBtn.addEventListener('click', () => {
+    container.classList.add('active');
+});
+
+loginBtn.addEventListener('click', () => {
+    container.classList.remove('active');
+});
+
+// Sidebar responsive para móvil
+document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.getElementById('sidebar');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    if (hamburgerBtn && sidebar) {
+        hamburgerBtn.addEventListener('click', function() {
+            sidebar.classList.add('active');
+            if (closeSidebarBtn) closeSidebarBtn.style.display = 'inline-block';
+        });
+    }
+    if (closeSidebarBtn && sidebar) {
+        closeSidebarBtn.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            closeSidebarBtn.style.display = 'none';
+        });
+    }
+    // Cerrar sidebar al hacer click fuera en móvil
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+            if (!sidebar.contains(e.target) && e.target !== hamburgerBtn) {
+                sidebar.classList.remove('active');
+                if (closeSidebarBtn) closeSidebarBtn.style.display = 'none';
+            }
+        }
+    });
 });
