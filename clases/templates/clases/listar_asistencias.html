@@ -1,0 +1,71 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<h2 class="text-2xl font-bold mb-6 text-center">Listado de Asistencias</h2>
+
+<div class="overflow-x-auto">
+    <table class="table-auto w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
+        <thead class="bg-blue-500 text-white">
+            <tr>
+                <th class="px-6 py-3 text-center text-sm font-medium">Clase</th>
+                <th class="px-6 py-3 text-center text-sm font-medium">Docente</th>
+                <th class="px-6 py-3 text-center text-sm font-medium">Foto Clase</th>
+                <th class="px-6 py-3 text-center text-sm font-medium">Foto Lista</th>
+                <th class="px-6 py-3 text-center text-sm font-medium">Foto Selfie</th>
+                <th class="px-6 py-3 text-center text-sm font-medium">Comentarios</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asistencia in page_obj %}
+            <tr class="border-b hover:bg-gray-100">
+                <td class="px-6 py-4 text-center text-sm text-gray-700">{{ asistencia.clase.materia }}</td>
+                <td class="px-6 py-4 text-center text-sm text-gray-700">{{ asistencia.clase.docente.nombre }}</td>
+                <td class="px-6 py-4 text-center text-sm text-blue-500">
+                    <a href="{{ asistencia.foto_clase.url }}" target="_blank" class="hover:underline">Ver Foto</a>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-blue-500">
+                    <a href="{{ asistencia.foto_lista.url }}" target="_blank" class="hover:underline">Ver Foto</a>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-blue-500">
+                    <a href="{{ asistencia.foto_selfie.url }}" target="_blank" class="hover:underline">Ver Foto</a>
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-gray-700">
+                    {{ asistencia.comentarios|default:"Sin comentarios" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay asistencias registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+<div class="mt-4">
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

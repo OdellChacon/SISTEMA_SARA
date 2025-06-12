@@ -1,0 +1,53 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Docentes{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+<script src="{% static 'docentes/js/docentes.js' %}" defer></script>
+
+<div class="dashboard-container flex justify-center items-center">
+    <div class="table-container">
+        <form method="post" class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
+            {% csrf_token %}
+            <h2 class="text-3xl font-bold mb-6 text-center">Registrar Administrador</h2>
+
+            <div class="form-grid gap-6">
+                <div class="input-group">
+                    <label for="id_id" class="font-semibold text-gray-700 dark:text-gray-200">ID</label>
+                    {{ form.id }}
+                </div>
+                <div class="input-group">
+                    <label for="id_nombre" class="font-semibold text-gray-700 dark:text-gray-200">Nombre</label>
+                    {{ form.nombre }}
+                </div>
+                <div class="input-group">
+                    <label for="id_apellido" class="font-semibold text-gray-700 dark:text-gray-200">Apellido</label>
+                    {{ form.apellido }}
+                </div>
+                <div class="input-group">
+                    <label for="id_cedula" class="font-semibold text-gray-700 dark:text-gray-200">Cédula</label>
+                    {{ form.cedula }}
+                </div>
+                <div class="input-group">
+                    <label for="id_activo" class="font-semibold text-gray-700 dark:text-gray-200">Estado</label>
+                    <select name="activo" id="id_activo" class="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-500">
+                        <option value="True" {% if form.activo.value %}selected{% endif %}>Activo</option>
+                        <option value="False" {% if not form.activo.value %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group mt-8">
+                <button type="submit" class="btn btn-green hover:scale-105">
+                    <i class="bx bx-save"></i> Guardar
+                </button>
+                <a href="{% url 'docentes_list' %}" class="btn btn-red hover:scale-105">
+                    <i class="bx bx-x"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

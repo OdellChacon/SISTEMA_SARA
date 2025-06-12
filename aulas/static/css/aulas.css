@@ -1,0 +1,33 @@
+/* Importar estilos base de docentes */
+@import url("../../docentes/css/docentes.css");
+
+/* Estilos específicos para el formulario de aulas */
+.aula-form input[type="text"],
+.aula-form input[type="number"] {
+  -moz-appearance: textfield; /* Eliminar flechas en Firefox */
+  -webkit-appearance: none; /* Eliminar flechas en Chrome, Safari, Edge */
+  appearance: none; /* Estándar */
+}
+
+.aula-form input[type="number"]::-webkit-inner-spin-button,
+.aula-form input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none; /* Eliminar flechas en navegadores basados en WebKit */
+  margin: 0;
+}
+
+/* Refuerzo del estilo del botón "Guardar" */
+.aula-form .btn-green {
+  background-color: #28a745 !important; /* Verde */
+  color: white !important; /* Fuente blanca */
+  border: none;
+}
+
+.aula-form .btn-green:hover {
+  background-color: #218838 !important; /* Verde más oscuro */
+}
+
+/* Separar etiquetas de los campos */
+.input-group label {
+  margin-bottom: 8px; /* Aumentar espacio entre la etiqueta y el campo */
+  display: block; /* Asegurar que la etiqueta esté en una línea separada */
+}

@@ -1,0 +1,88 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Detalle del Docente{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="dashboard-container flex justify-center items-center">
+    <div class="table-container">
+        <div class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
+            <h2 class="text-3xl font-bold mb-6 text-center">Detalle del Docente</h2>
+
+            <div class="form-grid gap-6">
+                <div class="ant-space ant-space-horizontal ant-space-align-center ant-space-gap-row-small ant-space-gap-col-small first-space-item-full">
+                    <label class="font-semibold text-gray-700 dark:text-gray-300">Nombre</label>
+                    <div class="ant-space-item">
+                        <input readonly class="ant-input ant-input-outlined api-token copieble w-100 dark:bg-gray-700 dark:text-gray-300" type="text" value="{{ docente.nombre }}">
+                    </div>
+                    <div class="ant-space-item">
+                        <button title="Copiar al portapapeles" type="button" class="ant-btn ant-btn-default ant-btn-icon-only noPadding dark:bg-gray-700 dark:text-gray-300" onclick="copiarAlPortapapeles('{{ docente.nombre }}')">
+                            <i class="bx bx-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="ant-space ant-space-horizontal ant-space-align-center ant-space-gap-row-small ant-space-gap-col-small first-space-item-full">
+                    <label class="font-semibold text-gray-700 dark:text-gray-300">Apellido</label>
+                    <div class="ant-space-item">
+                        <input readonly class="ant-input ant-input-outlined api-token copieble w-100 dark:bg-gray-700 dark:text-gray-300" type="text" value="{{ docente.apellido }}">
+                    </div>
+                    <div class="ant-space-item">
+                        <button title="Copiar al portapapeles" type="button" class="ant-btn ant-btn-default ant-btn-icon-only noPadding dark:bg-gray-700 dark:text-gray-300" onclick="copiarAlPortapapeles('{{ docente.apellido }}')">
+                            <i class="bx bx-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="ant-space ant-space-horizontal ant-space-align-center ant-space-gap-row-small ant-space-gap-col-small first-space-item-full">
+                    <label class="font-semibold text-gray-700 dark:text-gray-300">Cédula</label>
+                    <div class="ant-space-item">
+                        <input readonly class="ant-input ant-input-outlined api-token copieble w-100 dark:bg-gray-700 dark:text-gray-300" type="text" value="{{ docente.cedula }}">
+                    </div>
+                    <div class="ant-space-item">
+                        <button title="Copiar al portapapeles" type="button" class="ant-btn ant-btn-default ant-btn-icon-only noPadding dark:bg-gray-700 dark:text-gray-300" onclick="copiarAlPortapapeles('{{ docente.cedula }}')">
+                            <i class="bx bx-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="ant-space ant-space-horizontal ant-space-align-center ant-space-gap-row-small ant-space-gap-col-small first-space-item-full">
+                    <label class="font-semibold text-gray-700 dark:text-gray-300">Estado</label>
+                    <div class="ant-space-item">
+                        <input readonly class="ant-input ant-input-outlined api-token copieble w-100 dark:bg-gray-700 dark:text-gray-300" type="text" value="{{ docente.activo|yesno:'Activo,Inactivo' }}">
+                    </div>
+                    <div class="ant-space-item">
+                        <button title="Copiar al portapapeles" type="button" class="ant-btn ant-btn-default ant-btn-icon-only noPadding dark:bg-gray-700 dark:text-gray-300" onclick="copiarAlPortapapeles('{{ docente.activo|yesno:'Activo,Inactivo' }}')">
+                            <i class="bx bx-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div class="btn-group mt-8 text-center">
+                <a href="{% url 'docentes_list' %}" class="btn btn-blue">
+                    <i class="bx bx-arrow-back"></i> Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copiarAlPortapapeles(texto) {
+        navigator.clipboard.writeText(texto).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Copiado',
+                text: 'El texto se ha copiado al portapapeles.',
+                timer: 1500,
+                toast: true, // Mostrar como un toast
+                position: 'top-end', // Posición en la esquina superior derecha
+                showConfirmButton: false
+            });
+        });
+    }
+</script>
+{% endblock %}

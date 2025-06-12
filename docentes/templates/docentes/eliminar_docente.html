@@ -1,0 +1,21 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Docente{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <h2 class="text-3xl font-bold mb-6 text-center">Eliminar Docente</h2>
+    
+    <p class="text-center text-lg">¿Estás seguro de que deseas eliminar al docente {{ docente.nombre }} {{ docente.apellido }}?</p>
+    
+    <div class="flex justify-center gap-10 mt-6">
+        <form method="POST" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+        </form>
+        
+        <a href="{% url 'docentes_list' %}" class="btn btn-gray">Cancelar</a>
+    </div>
+</div>
+{% endblock %}

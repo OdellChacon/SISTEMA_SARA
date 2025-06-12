@@ -1,0 +1,42 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Editar Materia{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+<script src="{% static 'materias/js/materias.js' %}" defer></script>
+
+<div class="dashboard-container flex justify-center items-center">
+    <div class="table-container">
+        <form method="post" class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
+            {% csrf_token %}
+            <h2 class="text-3xl font-bold mb-6 text-center">Editar Materia</h2>
+
+            <div class="form-grid gap-6">
+                <div class="input-group">
+                    <label for="id_codigo_materia" class="font-semibold text-gray-700 dark:text-gray-200">Código Materia</label>
+                    {{ form.codigo_materia }}
+                </div>
+                <div class="input-group">
+                    <label for="id_descripcion" class="font-semibold text-gray-700 dark:text-gray-200">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+                <div class="input-group">
+                    <label for="id_trayecto" class="font-semibold text-gray-700 dark:text-gray-200">Trayecto</label>
+                    {{ form.trayecto }}
+                </div>
+            </div>
+
+            <div class="btn-group mt-8">
+                <button type="submit" class="btn btn-blue hover:scale-105">
+                    <i class="bx bx-save"></i> Actualizar
+                </button>
+                <a href="{% url 'materias_list' %}" class="btn btn-red hover:scale-105">
+                    <i class="bx bx-x"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

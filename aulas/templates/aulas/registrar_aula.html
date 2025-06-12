@@ -1,0 +1,54 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Registrar Aula{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
+<script src="{% static 'aulas/js/aulas.js' %}" defer></script>
+
+<div class="dashboard-container flex justify-center items-center">
+    <div class="table-container">
+        <form method="post" class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
+            {% csrf_token %}
+            <h2 class="text-3xl font-bold mb-6 text-center">Registrar Aula</h2>
+
+            <div class="form-grid gap-6">
+                <div class="input-group">
+                    <label for="id_codigo_aula" class="font-semibold text-gray-700 dark:text-gray-200">Código Aula</label>
+                    {{ form.codigo_aula }}
+                </div>
+                <div class="input-group">
+                    <label for="id_descripcion" class="font-semibold text-gray-700 dark:text-gray-200">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+                <div class="input-group">
+                    <label for="id_capacidad" class="font-semibold text-gray-700 dark:text-gray-200">Capacidad</label>
+                    {{ form.capacidad }}
+                </div>
+                <div class="input-group">
+                    <label for="id_estatus" class="font-semibold text-gray-700 dark:text-gray-200">Estatus</label>
+                    {{ form.estatus }}
+                </div>
+                <div class="input-group">
+                    <label for="id_sede" class="font-semibold text-gray-700 dark:text-gray-200">Sede</label>
+                    {{ form.sede }}
+                </div>
+                <div class="input-group">
+                    <label for="id_serial" class="font-semibold text-gray-700 dark:text-gray-200">Serial</label>
+                    {{ form.serial }}
+                </div>
+            </div>
+
+            <div class="btn-group mt-8">
+                <button type="submit" class="btn btn-green hover:scale-105">
+                    <i class="bx bx-save"></i> Guardar
+                </button>
+                <a href="{% url 'aulas_list' %}" class="btn btn-red hover:scale-105">
+                    <i class="bx bx-x"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
