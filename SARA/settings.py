@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ioi$+q%@)%7f(v_8#8o@x@e&&miuu9gt*qz-227@=rt%$jt02j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'web-production-1eb3.up.railway.app']
+ALLOWED_HOSTS = ['localhost', '*', 'web-production-1eb3.up.railway.app']
 
 LOGIN_REDIRECT_URL = '/dashboard'
 LOGOUT_REDIRECT_URL = '/'
@@ -91,6 +91,19 @@ AUTHENTICATION_BACKENDS = [
     'docentes.backends.EmailOrUsernameBackend',  # Backend personalizado
     'django.contrib.auth.backends.ModelBackend',  # Backend predeterminado de Django
 ]
+
+import dj_database_url
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASES = {
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+}
+
+print(os.getenv('DATABASE_URL'))
+
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -105,14 +118,6 @@ AUTHENTICATION_BACKENDS = [
 #         'PORT': '5432',       
 #     }
 # }
-
-# Nueva configuración para SQLite3
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -169,3 +174,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-1eb3.up.railway.app',
+    'http://*',
+]
