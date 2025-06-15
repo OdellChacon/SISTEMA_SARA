@@ -11,7 +11,7 @@ def hora_actual():
 class Clase(models.Model):
     id = models.AutoField(primary_key=True)  # ID único generado automáticamente
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
-    materia = models.ForeignKey(Materia, on_delete=models.CASCADE)  
+    materia = models.ForeignKey(Materia, on_delete=models.CASCADE, null=True, blank=True)  
     fecha = models.DateField(null=False, default=timezone.now)
     hora_inicio = models.TimeField(null=False)
     hora_fin = models.TimeField(null=False)

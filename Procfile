@@ -1,1 +1,1 @@
-web: python manage.py collectstatic && gunicorn SARA.wsgi
+web: gunicorn SARA.wsgi

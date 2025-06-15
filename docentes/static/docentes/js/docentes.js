@@ -428,54 +428,103 @@ function cerrarModal() {
     modal.classList.add("hidden");
 }
 
-// Implementación de la barra de búsqueda dinámica en el servidor (AJAX)
+// Implementación de la barra de búsqueda dinámica en el servidor (AJAX) con debounce
 const searchInput = document.getElementById('searchInput');
 const tableBody = document.querySelector('#docentesTable tbody');
+let debounceTimeout = null;
+
+// Calcula y fija la altura del tbody para evitar saltos visuales
+function fixTableBodyHeight() {
+    if (tableBody) {
+        const currentHeight = tableBody.offsetHeight;
+        tableBody.style.minHeight = currentHeight + "px";
+    }
+}
+function resetTableBodyHeight() {
+    if (tableBody) {
+        tableBody.style.minHeight = "";
+    }
+}
+
+function attachCheckboxEvents() {
+    const docenteCheckboxes = document.querySelectorAll('.docenteCheckbox');
+    docenteCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", () => {
+            if (checkbox.checked) {
+                allSelectedIds.add(checkbox.value);
+            } else {
+                allSelectedIds.delete(checkbox.value);
+            }
+            updateSelectionControls();
+        });
+    });
+}
 
 if (searchInput) {
     searchInput.addEventListener('input', () => {
-        const searchTerm = searchInput.value.trim();
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            const searchTerm = searchInput.value.trim();
 
-        if (searchTerm.length > 0) {
-            fetch(`/docentes/buscar/?q=${encodeURIComponent(searchTerm)}`)
-                .then(response => response.json())
-                .then(data => {
-                    tableBody.innerHTML = ''; // Limpiar la tabla
-                    if (data.results.length > 0) {
-                        data.results.forEach(docente => {
-                            const row = `
-                                <tr>
-                                    <td><input type="checkbox" class="docenteCheckbox" value="${docente.id}"></td>
-                                    <td>${docente.id}</td>
-                                    <td class="nombre-docente">${docente.nombre}</td>
-                                    <td class="apellido-docente">${docente.apellido}</td>
-                                    <td class="cedula-docente">${docente.cedula}</td>
-                                    <td>${docente.activo ? 'Activo' : 'Inactivo'}</td>
-                                    <td>
-                                        <a href="/docentes/detalle/${docente.id}" class="btn btn-view" title="Ver">
-                                            <i class="bx bx-show"></i>
-                                        </a>
-                                        <a href="/docentes/editar/${docente.id}" class="btn btn-edit" title="Editar">
-                                            <i class="bx bx-edit"></i>
-                                        </a>
-                                        <button class="btn btn-delete" onclick="confirmarEliminacion(${docente.id})" title="Eliminar">
-                                            <i class="bx bx-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                            tableBody.insertAdjacentHTML('beforeend', row);
-                        });
-                    } else {
-                        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron resultados</td></tr>';
-                    }
-                    // Reasignar eventos a los nuevos checkboxes si es necesario
-                })
-                .catch(error => {
-                    console.error('Error al buscar:', error);
-                });
-        } else {
-            location.reload(); // Recargar la página si el término está vacío
-        }
+            if (searchTerm.length > 0) {
+                fixTableBodyHeight();
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Buscando...</td></tr>';
+                fetch(`/docentes/buscar/?q=${encodeURIComponent(searchTerm)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        tableBody.innerHTML = '';
+                        if (data.results.length > 0) {
+                            data.results.forEach(docente => {
+                                const row = `
+                                    <tr>
+                                        <td><input type="checkbox" class="docenteCheckbox" value="${docente.id}"></td>
+                                        <td>${docente.id}</td>
+                                        <td class="nombre-docente">${docente.nombre}</td>
+                                        <td class="apellido-docente">${docente.apellido}</td>
+                                        <td class="cedula-docente">${docente.cedula}</td>
+                                        <td>${docente.activo ? 'Activo' : 'Inactivo'}</td>
+                                        <td>
+                                            <a href="/docentes/detalle/${docente.id}" class="btn btn-view" title="Ver">
+                                                <i class="bx bx-show"></i>
+                                            </a>
+                                            <a href="/docentes/editar/${docente.id}" class="btn btn-edit" title="Editar">
+                                                <i class="bx bx-edit"></i>
+                                            </a>
+                                            <button class="btn btn-delete" onclick="confirmarEliminacion(${docente.id})" title="Eliminar">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                                tableBody.insertAdjacentHTML('beforeend', row);
+                            });
+                        } else {
+                            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron resultados</td></tr>';
+                        }
+                        attachCheckboxEvents();
+                        resetTableBodyHeight();
+                    })
+                    .catch(error => {
+                        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-red-500">Error al buscar</td></tr>';
+                        resetTableBodyHeight();
+                        console.error('Error al buscar:', error);
+                    });
+            } else {
+                // Si el campo está vacío, recargar la lista original vía AJAX (sin recargar toda la página)
+                fixTableBodyHeight();
+                fetch(window.location.pathname)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newTbody = doc.querySelector('#docentesTable tbody');
+                        if (newTbody) {
+                            tableBody.innerHTML = newTbody.innerHTML;
+                            attachCheckboxEvents();
+                        }
+                        resetTableBodyHeight();
+                    });
+            }
+        }, 350); // Espera 350ms tras la última pulsación
     });
 }

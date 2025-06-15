@@ -151,6 +151,7 @@ def obtener_todos_los_ids(request):
 
 def buscar_aulas(request):
     query = request.GET.get('q', '').strip()
+    page_number = request.GET.get('page')
     if query:
         aulas = Aula.objects.filter(
             codigo_aula__icontains=query
@@ -163,6 +164,8 @@ def buscar_aulas(request):
         ) | Aula.objects.filter(
             serial__icontains=query
         )
+        paginator = Paginator(aulas, 5)  # Paginador de 5 resultados
+        page_obj = paginator.get_page(page_number)
         results = [
             {
                 'id': aula.id,
@@ -172,8 +175,15 @@ def buscar_aulas(request):
                 'estatus': aula.estatus,
                 'sede': aula.sede,
                 'serial': aula.serial
-            } for aula in aulas
+            } for aula in page_obj.object_list
         ]
+        response = {
+            'results': results,
+            'num_pages': paginator.num_pages,
+            'current_page': page_obj.number,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+        }
     else:
-        results = []
-    return JsonResponse({'results': results})
+        response = {'results': []}
+    return JsonResponse(response)

@@ -5,7 +5,7 @@ from materias.models import Materia
 from aulas.models import Aula
 from django.utils.timezone import now, localtime, make_aware
 from django.core.paginator import Paginator
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timedelta
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 import json
 
@@ -17,8 +17,8 @@ def verificar_incumplimientos():
             Incumplimiento.objects.get_or_create(clase=clase, docente=clase.docente)
 
 def calendario(request):
-    docentes = Docente.objects.filter(rol=2).values('id', 'nombre', 'cedula')
-    materias = Materia.objects.all().values('id', 'codigo_materia', 'descripcion', 'trayecto')
+    docentes = Docente.objects.filter(rol=2).values('id', 'nombre', 'apellido', 'cedula')
+    materias = Materia.objects.all().values('id', 'codigo_materia', 'descripcion', 'carrera', 'trayecto', 'trimestre')
     aulas = Aula.objects.all().values('id', 'codigo_aula', 'descripcion')  # Solo estos campos
 
     if request.user.is_superuser or request.user.is_staff:
@@ -72,19 +72,49 @@ def registrar_clase(request):
             materia = Materia.objects.get(id=data['materia_id'])
             aula = Aula.objects.get(id=data['aula_id'])
 
-            # Validar que hora_inicio sea menor que hora_fin
-            if data['hora_inicio'] >= data['hora_fin']:
+            fecha_inicio = data['fecha_inicio']
+            fecha_fin_repeticion = data.get('fecha_fin_repeticion')
+            hora_inicio = data['hora_inicio']
+            hora_fin = data['hora_fin']
+
+            if hora_inicio >= hora_fin:
                 return JsonResponse({'status': 'error', 'message': 'La hora de inicio debe ser menor que la hora de fin.'}, status=400)
 
-            nueva_clase = Clase.objects.create(
-                docente=docente,
-                materia=materia,
-                aula=aula,
-                fecha=data['fecha_inicio'],
-                hora_inicio=data['hora_inicio'],
-                hora_fin=data['hora_fin']
-            )
-            return JsonResponse({'status': 'success', 'message': 'Clase registrada', 'id': nueva_clase.id})  # ✅ Devolver el ID de la clase
+            # Convertir fechas a objetos date
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            if fecha_fin_repeticion:
+                fecha_fin_dt = datetime.strptime(fecha_fin_repeticion, "%Y-%m-%d").date()
+            else:
+                fecha_fin_dt = fecha_inicio_dt
+
+            # Día de la semana de la clase original
+            dia_semana = fecha_inicio_dt.weekday()  # 0=lunes, 6=domingo
+
+            clases_creadas = []
+            fecha_actual = fecha_inicio_dt
+            while fecha_actual <= fecha_fin_dt:
+                if fecha_actual.weekday() == dia_semana:
+                    # Verificar conflicto antes de crear
+                    conflicto = Clase.objects.filter(
+                        aula=aula,
+                        fecha=fecha_actual,
+                        hora_inicio__lt=hora_fin,
+                        hora_fin__gt=hora_inicio
+                    ).exists()
+                    if not conflicto:
+                        clase = Clase.objects.create(
+                            docente=docente,
+                            materia=materia,
+                            aula=aula,
+                            fecha=fecha_actual,
+                            hora_inicio=hora_inicio,
+                            hora_fin=hora_fin
+                        )
+                        clases_creadas.append(clase.id)
+                fecha_actual += timedelta(days=1)
+            if not clases_creadas:
+                return JsonResponse({'status': 'error', 'message': 'No se pudo registrar ninguna clase (conflicto de horario).'})
+            return JsonResponse({'status': 'success', 'message': 'Clases registradas', 'ids': clases_creadas})
         except (Docente.DoesNotExist, Materia.DoesNotExist, Aula.DoesNotExist):
             return JsonResponse({'status': 'error', 'message': 'Docente, materia o aula no encontrado'})
         except Exception as e:

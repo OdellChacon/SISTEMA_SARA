@@ -4,11 +4,12 @@
 {% block title %}Detalle del Docente{% endblock %}
 
 {% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="dashboard-container flex justify-center items-center">
-    <div class="table-container">
+    <div class="table-container w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
         <div class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
             <h2 class="text-3xl font-bold mb-6 text-center">Detalle del Docente</h2>
 
@@ -61,7 +62,7 @@
                 </div>
             </div>
 
-            <div class="btn-group mt-8 text-center">
+            <div class="btn-group mt-8 text-center flex flex-wrap gap-2">
                 <a href="{% url 'docentes_list' %}" class="btn btn-blue">
                     <i class="bx bx-arrow-back"></i> Volver a la lista
                 </a>

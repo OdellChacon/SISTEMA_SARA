@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // ✅ Parsear datos enviados desde el backend
+    // ✅ Parsear datos enviados desde elbackend
     const listaDocentes = JSON.parse(document.getElementById('docentes-json').textContent);
     const listaMaterias = JSON.parse(document.getElementById('materias-json').textContent);
     const listaAulas = JSON.parse(document.getElementById('aulas-json').textContent);
@@ -56,62 +56,134 @@ document.addEventListener('DOMContentLoaded', () => {
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         dateClick: function(info) {
-            // Eliminar este bloque:
-            // if (!ES_STAFF) {
-            //     Swal.fire('Acción no permitida', 'Solo el personal autorizado puede registrar clases.', 'warning');
-            //     return;
-            // }
-            // Ahora todos pueden crear clases
-
+            // DOCENTES: nombre y apellido, barra de búsqueda
             let docenteSelectHtml;
             if (ES_STAFF) {
-                docenteSelectHtml = `
-                    <label>Docente</label>
-                    <select id="docente" class="swal2-input" style="grid-column: span 2;">
-                        ${listaDocentes.map(docente => `<option value="${docente.id}">${docente.nombre}</option>`).join('')}
-                    </select>
-                `;
+                docenteSelectHtml = createSearchableSelect(
+                    "docente",
+                    listaDocentes,
+                    "docente",
+                    docente => `${docente.nombre} ${docente.apellido || ''}`.trim()
+                );
             } else {
                 const docente = listaDocentes.find(d => d.id == USER_ID);
                 docenteSelectHtml = `
                     <label>Docente</label>
                     <select id="docente" class="swal2-input" style="grid-column: span 2;" disabled>
-                        <option value="${docente.id}">${docente.nombre}</option>
+                        <option value="${docente.id}">${docente.nombre} ${docente.apellido || ''}</option>
                     </select>
                 `;
             }
+
+            const aulaSelectHtml = createSearchableSelect(
+                "aula",
+                listaAulas,
+                "aula",
+                aula => `${aula.codigo_aula} - ${aula.descripcion}`
+            );
+
+            const carreras = [...new Set(listaMaterias.map(m => m.carrera))].sort();
+            const trayectos = [...new Set(listaMaterias.map(m => m.trayecto))].sort();
+
+            const materiaFiltersHtml = `
+                <label>Carrera</label>
+                <select id="filtro_carrera" class="swal2-input" style="grid-column: span 2;">
+                    <option value="">Todas</option>
+                    ${carreras.map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+                <label>Trayecto</label>
+                <select id="filtro_trayecto" class="swal2-input" style="grid-column: span 2;">
+                    <option value="">Todos</option>
+                    ${trayectos.map(t => `<option value="${t}">${t}</option>`).join('')}
+                </select>
+            `;
+
+            // Select de materias con código, descripción y trimestre
+            function materiaOptionLabel(m) {
+                return `${m.codigo_materia} - ${m.descripcion} (Trimestre: ${m.trimestre})`;
+            }
+            const materiaSelectHtml = `
+                <label>Materia</label>
+                <select id="materia" class="swal2-input" style="grid-column: span 2;">
+                    ${listaMaterias.map(m => `<option value="${m.id}" data-carrera="${m.carrera}" data-trayecto="${m.trayecto}">${materiaOptionLabel(m)}</option>`).join('')}
+                </select>
+            `;
+
             Swal.fire({
                 title: 'Registrar Clase',
                 html: `
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left;">
                         ${docenteSelectHtml}
-                        <label>Materia</label>
-                        <select id="materia" class="swal2-input" style="grid-column: span 2;">
-                            ${listaMaterias.map(materia => `
-                                <option value="${materia.id}">
-                                    ${materia.codigo_materia} - ${materia.descripcion} (Trayecto: ${materia.trayecto})
-                                </option>
-                            `).join('')}
-                        </select>
-
-                        <label>Aula</label>
-                        <select id="aula" class="swal2-input" style="grid-column: span 2;">
-                            ${listaAulas.map(aula => `
-                                <option value="${aula.id}">
-                                    ${aula.codigo_aula} - ${aula.descripcion}
-                                </option>`).join('')}
-                        </select>
-
+                        ${materiaFiltersHtml}
+                        ${materiaSelectHtml}
+                        ${aulaSelectHtml}
                         <label>Hora Inicio</label>
                         <input id="hora_inicio" type="time" class="swal2-input" value="08:00">
-
                         <label>Hora Fin</label>
                         <input id="hora_fin" type="time" class="swal2-input" value="09:00">
+                        <label>Repetir hasta (opcional)</label>
+                        <input id="fecha_fin_repeticion" type="date" class="swal2-input">
                     </div>
                 `,
                 confirmButtonText: 'Guardar',
                 showCancelButton: true,
                 cancelButtonText: 'Cancelar',
+                didOpen: () => {
+                    // Docente búsqueda
+                    const docenteSearch = document.getElementById('docente_search');
+                    const docenteSelect = document.getElementById('docente');
+                    if (docenteSearch && docenteSelect) {
+                        docenteSearch.addEventListener('input', function() {
+                            const val = docenteSearch.value.toLowerCase();
+                            let firstVisible = null;
+                            for (const option of docenteSelect.options) {
+                                const visible = option.text.toLowerCase().includes(val);
+                                option.style.display = visible ? '' : 'none';
+                                if (visible && !firstVisible) firstVisible = option;
+                            }
+                            // Selecciona la primera opción visible si existe
+                            if (firstVisible) {
+                                docenteSelect.value = firstVisible.value;
+                            }
+                        });
+                    }
+                    // Aula búsqueda
+                    const aulaSearch = document.getElementById('aula_search');
+                    const aulaSelect = document.getElementById('aula');
+                    if (aulaSearch && aulaSelect) {
+                        aulaSearch.addEventListener('input', function() {
+                            const val = aulaSearch.value.toLowerCase();
+                            let firstVisible = null;
+                            for (const option of aulaSelect.options) {
+                                const visible = option.text.toLowerCase().includes(val);
+                                option.style.display = visible ? '' : 'none';
+                                if (visible && !firstVisible) firstVisible = option;
+                            }
+                            if (firstVisible) {
+                                aulaSelect.value = firstVisible.value;
+                            }
+                        });
+                    }
+                    // Materia búsqueda y filtros
+                    // Eliminar referencia a materiaSearch
+                    // Solo aplicar filtros de carrera y trayecto
+                    const materiaSelect = document.getElementById('materia');
+                    const filtroCarrera = document.getElementById('filtro_carrera');
+                    const filtroTrayecto = document.getElementById('filtro_trayecto');
+                    function filtrarMaterias() {
+                        const carrera = filtroCarrera.value;
+                        const trayecto = filtroTrayecto.value;
+                        for (const option of materiaSelect.options) {
+                            const coincideCarrera = !carrera || option.getAttribute('data-carrera') === carrera;
+                            const coincideTrayecto = !trayecto || option.getAttribute('data-trayecto') === trayecto;
+                            option.style.display = (coincideCarrera && coincideTrayecto) ? '' : 'none';
+                        }
+                    }
+                    if (materiaSelect && filtroCarrera && filtroTrayecto) {
+                        filtroCarrera.addEventListener('change', filtrarMaterias);
+                        filtroTrayecto.addEventListener('change', filtrarMaterias);
+                    }
+                },
                 preConfirm: () => {
                     const materia = document.getElementById('materia').value;
                     const aula = document.getElementById('aula').value;
@@ -123,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     const hora_inicio = document.getElementById('hora_inicio').value;
                     const hora_fin = document.getElementById('hora_fin').value;
+                    const fecha_fin_repeticion = document.getElementById('fecha_fin_repeticion').value;
 
                     if (!materia || !aula || !hora_inicio || !hora_fin) {
                         Swal.showValidationMessage('Todos los campos son obligatorios');
@@ -135,7 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         docente_id: docenteId,
                         fecha_inicio: info.dateStr,
                         hora_inicio,
-                        hora_fin
+                        hora_fin,
+                        fecha_fin_repeticion // Puede ser vacío
                     };
                 }
             }).then((result) => {
@@ -459,5 +533,12 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Todo el código ya usa los campos id, nombre, cedula, codigo_aula, descripcion, etc.
-// Si los datos del backend están correctos, el frontend funcionará correctamente.
+// Utilidad para crear select con búsqueda
+function createSearchableSelect(id, options, placeholder, getOptionLabel) {
+    return `
+        <input type="text" id="${id}_search" class="swal2-input" placeholder="Buscar ${placeholder}..." style="margin-bottom:4px;">
+        <select id="${id}" class="swal2-input" style="grid-column: span 2;">
+            ${options.map(opt => `<option value="${opt.id}">${getOptionLabel(opt)}</option>`).join('')}
+        </select>
+    `;
+}

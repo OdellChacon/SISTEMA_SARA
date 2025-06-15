@@ -9,8 +9,8 @@ from .forms import MateriaForm
 
 
 def materias_list(request):
-    materias = Materia.objects.all()
-    paginator = Paginator(materias, 5)
+    materias = Materia.objects.all().order_by('carrera', 'trayecto', 'codigo_materia')
+    paginator = Paginator(materias, 5)  # Cambiado a 5 por página
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'materias/materias_list.html', {'page_obj': page_obj, 'materias': page_obj.object_list})
@@ -59,21 +59,23 @@ def importar_materias(request):
         file = request.FILES['file']
         reader = csv.reader(file.read().decode('utf-8').splitlines())
         header = next(reader)
-        # Buscar los índices de las columnas requeridas
         try:
             idx_codigo = header.index('codigo_materia')
             idx_desc = header.index('descripcion')
+            idx_carrera = header.index('carrera')
             idx_trayecto = header.index('trayecto')
+            idx_trimestre = header.index('trimestre')
         except ValueError:
-            return JsonResponse({'success': False, 'message': 'El archivo debe tener las columnas: codigo_materia, descripcion, trayecto'}, status=400)
+            return JsonResponse({'success': False, 'message': 'El archivo debe tener las columnas: codigo_materia, descripcion, carrera, trayecto, trimestre'}, status=400)
         for row in reader:
-            # Solo importar si hay suficientes columnas
-            if len(row) <= max(idx_codigo, idx_desc, idx_trayecto):
+            if len(row) <= max(idx_codigo, idx_desc, idx_carrera, idx_trayecto, idx_trimestre):
                 continue
             Materia.objects.create(
                 codigo_materia=row[idx_codigo],
                 descripcion=row[idx_desc],
-                trayecto=row[idx_trayecto]
+                carrera=row[idx_carrera],
+                trayecto=row[idx_trayecto],
+                trimestre=row[idx_trimestre]
             )
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'message': 'Archivo no válido'}, status=400)
@@ -86,9 +88,9 @@ def exportar_materias(request, format, scope):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="materias.csv"'
         writer = csv.writer(response)
-        writer.writerow(['codigo_materia', 'descripcion', 'trayecto'])
+        writer.writerow(['codigo_materia', 'descripcion', 'carrera', 'trayecto', 'trimestre'])
         for materia in materias:
-            writer.writerow([materia.codigo_materia, materia.descripcion, materia.trayecto])
+            writer.writerow([materia.codigo_materia, materia.descripcion, materia.carrera, materia.trayecto, materia.trimestre])
         return response
 
     # Aquí puedes agregar soporte a otros formatos: json, xml, etc.
@@ -114,6 +116,7 @@ def obtener_todos_los_ids(request):
 
 def buscar_materias(request):
     query = request.GET.get('q', '').strip()
+    page_number = request.GET.get('page', 1)
     if query:
         materias = Materia.objects.filter(
             codigo_materia__icontains=query
@@ -121,15 +124,39 @@ def buscar_materias(request):
             descripcion__icontains=query
         ) | Materia.objects.filter(
             trayecto__icontains=query
+        ) | Materia.objects.filter(
+            carrera__icontains=query
+        ) | Materia.objects.filter(
+            trimestre__icontains=query
         )
+        materias = materias.order_by('carrera', 'trayecto', 'codigo_materia')
+        paginator = Paginator(materias, 5)  # Limita a 5 resultados por página
+        page_obj = paginator.get_page(page_number)
         results = [
             {
                 'id': materia.id,
                 'codigo_materia': materia.codigo_materia,
                 'descripcion': materia.descripcion,
-                'trayecto': materia.trayecto
-            } for materia in materias
+                'carrera': materia.carrera,
+                'trayecto': materia.trayecto,
+                'trimestre': materia.trimestre,
+                # Agrega aquí otros campos si existen en el modelo Materia
+                # 'otro_campo': materia.otro_campo,
+            } for materia in page_obj
         ]
+        response = {
+            'results': results,
+            'num_pages': paginator.num_pages,
+            'current_page': page_obj.number,
+            'has_previous': page_obj.has_previous(),
+            'has_next': page_obj.has_next(),
+        }
     else:
-        results = []
-    return JsonResponse({'results': results})
+        response = {
+            'results': [],
+            'num_pages': 0,
+            'current_page': 1,
+            'has_previous': False,
+            'has_next': False,
+        }
+    return JsonResponse(response)

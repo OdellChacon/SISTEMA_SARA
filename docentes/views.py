@@ -442,12 +442,15 @@ def detalle_docente(request, docente_id):
 
 def buscar_docentes(request):
     termino = request.GET.get('q', '').strip()
+    page_number = request.GET.get('page', 1)
     if termino:
         docentes = Docente.objects.filter(
             Q(nombre__icontains=termino) |
             Q(apellido__icontains=termino) |
             Q(cedula__icontains=termino)
         )
+        paginator = Paginator(docentes, 5)
+        page_obj = paginator.get_page(page_number)
         resultados = [
             {
                 'id': docente.id,
@@ -456,9 +459,15 @@ def buscar_docentes(request):
                 'cedula': docente.cedula,
                 'activo': docente.activo,
             }
-            for docente in docentes
+            for docente in page_obj.object_list
         ]
-        return JsonResponse({'results': resultados})
+        return JsonResponse({
+            'results': resultados,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+            'num_pages': paginator.num_pages,
+            'current_page': page_obj.number,
+        })
     return JsonResponse({'results': []})
 
 class CambiarClaveView(LoginRequiredMixin, PasswordChangeView):

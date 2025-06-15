@@ -4,14 +4,15 @@
 {% block title %}Lista de Aulas{% endblock %}
 
 {% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
 <script src="{% static 'docentes/js/docentes.js' %}" defer></script>
 <script src="{% static 'aulas/js/aulas.js' %}" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<div class="table-container max-w-screen-lg mx-auto mt-10 mb-10">
+<div class="table-container max-w-screen-lg mx-auto mt-10 mb-10 w-full overflow-x-auto">
     <h2 class="text-3xl font-bold mb-6 text-center">Lista de Aulas</h2>
-    <div class="btn-group flex items-center gap-2">
+    <div class="btn-group flex flex-wrap items-center gap-2">
         <button class="btn btn-green" onclick="location.href='{% url 'registrar_aula' %}'">
             <i class="bx bx-plus"></i> Registrar
         </button>
@@ -22,15 +23,11 @@
             <i class="bx bx-export"></i> Exportar
         </button>
     </div>
-
-    <!-- Barra de búsqueda con mismo estilo que docentes -->
     <br>
     <div class="search-bar mb-4">
         <input id="searchAulaInput" type="text" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Buscar por código, descripción, estatus, sede o serial...">
     </div>
-
-    <!-- Contenedor dinámico para eliminar seleccionados -->
-    <div id="selectionControls" class="hidden mt-4 flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
+    <div id="selectionControls" class="hidden mt-4 flex flex-wrap justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
         <span id="selectedCount" class="text-gray-700 text-sm font-medium">0 seleccionados</span>
         <div class="flex gap-2">
             <button id="selectAllRecords" class="btn btn-blue text-sm px-3 py-1">
@@ -42,7 +39,7 @@
         </div>
     </div>
     <div class="overflow-x-auto">
-        <table id="aulasTable" class="display w-full">
+        <table id="aulasTable" class="display w-full min-w-[600px]">
             <thead>
                 <tr>
                     <th><input type="checkbox" id="selectAll"></th>
