@@ -218,6 +218,8 @@ html, body {
     }
     .cards {
         gap: 8px;
+        flex-direction: column; /* <-- Apilar tarjetas verticalmente */
+        width: 100%;            /* <-- Ocupar todo el ancho */
     }
 }
 
@@ -448,6 +450,32 @@ body {
     background: linear-gradient(90deg, #e2e2e2, #c9d6ff);
 }
 
+@media (max-width: 768px) {
+    body {
+        display: block; /* Permite scroll normal en móviles */
+        min-height: unset;
+        height: auto;
+        /* background se mantiene igual */
+    }
+    .dashboard-container {
+        flex-direction: column;
+        height: auto !important; /* Permitir altura dinámica */
+        min-height: 100vh;
+        width: 100vw;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    .content {
+        margin-left: 0 !important;
+        padding: 0 8px;
+        width: 100vw;
+        min-width: 0;
+        overflow-y: visible; /* Permite scroll si es necesario */
+        height: auto;
+        min-height: 100vh;
+    }
+}
+
 .container {
     position: relative;
     width: 400px;
@@ -599,6 +627,42 @@ body {
     .content {
         margin-left: 0;
         padding: 0 8px;
+        width: 100vw;
+        min-width: 0;
+        overflow-y: auto;
+        height: auto;
+        min-height: 100vh;
+    }
+    .cards {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%; /* <-- Asegura que las tarjetas usen todo el ancho */
+    }
+    .charts {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%; /* <-- Asegura que los gráficos usen todo el ancho */
+    }
+    .chart {
+        width: 100% !important;
+        min-width: 0;
+        height: 300px;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+    }
+    .config-container {
+        padding: 10px;
+        margin: 10px auto;
+        max-width: 98vw;
+    }
+    .user-profile {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .container {
+        width: 98vw;
+        min-width: 0;
+        padding: 10px;
     }
 }
 
@@ -659,6 +723,7 @@ body {
         min-width: 0;
         height: 300px;
         margin-bottom: 10px;
+        box-sizing: border-box;
     }
     .config-container {
         padding: 10px;

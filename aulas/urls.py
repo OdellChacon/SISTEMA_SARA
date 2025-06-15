@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import eliminar_aula, importar_aulas, exportar_aulas, eliminar_seleccionados, obtener_todos_los_ids
+from .views import eliminar_aula, importar_aulas, exportar_aulas, eliminar_seleccionados, obtener_todos_los_ids, buscar_aulas
 
 urlpatterns = [
     path('', views.aulas_list, name='aulas_list'),
@@ -13,4 +13,5 @@ urlpatterns = [
     path('exportar/<str:format>/<str:scope>/', exportar_aulas, name='exportar_aulas'),
     path('eliminar_seleccionados/', eliminar_seleccionados, name='eliminar_seleccionados'),
     path('obtener_todos_los_ids/', obtener_todos_los_ids, name='obtener_todos_los_ids'),
+    path('buscar/', buscar_aulas, name='buscar_aulas'),
 ]

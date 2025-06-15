@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .views import *
 from .views import buscar_docentes
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', views.docentes_list, name='docentes_list'),
@@ -32,5 +33,6 @@ urlpatterns = [
     path('eliminarAdministrador/<int:docente_id>/', views.eliminar_admin, name='eliminar_admin'),
     path('detalle/<int:docente_id>/', views.detalle_admin, name='detalle_admin'),
 
+    path('cambiar_clave/', CambiarClaveView.as_view(), name='cambiar_clave'),
 
 ]

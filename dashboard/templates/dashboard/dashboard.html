@@ -4,6 +4,7 @@
 <br>
     <h1 style="font-size:1.5rem;">Dashboard Administrativo</h1>
     <br>
+    
     <div class="cards">
         {% if user.is_superuser or user.is_staff %}
         <div class="card">
@@ -36,8 +37,30 @@
                 <p>{{ incumplimientos_count }} reportados</p>
             </a>
         </div>
+        <!-- Tarjetas solo para móvil -->
+    <div class="cards block md:hidden">
+        <div class="card">
+            <a href="{% url 'aulas_list' %}" style="text-decoration: none; color: inherit;">
+                <i class='bx bx-building'></i>
+                <h3>Aulas</h3>
+            </a>
+        </div>
+        <div class="card">
+            <a href="{% url 'materias_list' %}" style="text-decoration: none; color: inherit;">
+                <i class='bx bx-book'></i>
+                <h3>Materias</h3>
+            </a>
+        </div>
+        <div class="card">
+            <a href="{% url 'cambiar_clave' %}" style="text-decoration: none; color: inherit;">
+                <i class='bx bx-key'></i>
+                <h3>Cambiar Clave</h3>
+            </a>
+        </div>
+    </div>
         {% endif %}
     </div>
+    {% if user.is_superuser or user.is_staff %}
     <div class="charts">
         <div class="chart">
             <h2 style="font-size:1.1rem;">Clases por Día</h2>
@@ -49,4 +72,6 @@
             <canvas id="cumplimientoChart"></canvas>
         </div>
     </div>
+    {% endif %}
+
 {% endblock %}

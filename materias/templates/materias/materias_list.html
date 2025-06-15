@@ -4,16 +4,17 @@
 {% block title %}Lista de Materias{% endblock %}
 
 {% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
 <script src="{% static 'docentes/js/docentes.js' %}" defer></script>
 <script src="{% static 'materias/js/materias.js' %}" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<div class="table-container max-w-screen-lg mx-auto mt-10 mb-10">
+<div class="table-container max-w-screen-lg mx-auto mt-10 mb-10 w-full overflow-x-auto">
     <h2 class="text-3xl font-bold mb-6 text-center">Lista de Materias</h2>
 
     <!-- Botones principales -->
-    <div class="btn-group flex items-center gap-2">
+    <div class="btn-group flex flex-wrap items-center gap-2">
         <button class="btn btn-green" onclick="location.href='{% url 'registrar_materia' %}'">
             <i class="bx bx-plus"></i> Registrar
         </button>
@@ -24,9 +25,14 @@
             <i class="bx bx-export"></i> Exportar
         </button>
     </div>
+    <br>
+    <!-- Barra de búsqueda -->
+    <div class="search-bar mb-4">
+        <input id="searchMateriaInput" type="text" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Buscar por código, descripción, carrera, trayecto o trimestre...">
+    </div>
 
     <!-- Controles de selección -->
-    <div id="selectionControls" class="hidden mt-4 flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
+    <div id="selectionControls" class="hidden mt-4 flex flex-wrap justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
         <span id="selectedCount" class="text-gray-700 text-sm font-medium">0 seleccionados</span>
         <div class="flex gap-2">
             <button id="selectAllRecords" class="btn btn-blue text-sm px-3 py-1">Seleccionar todos</button>
@@ -38,13 +44,15 @@
 
     <!-- Tabla -->
     <div class="overflow-x-auto mt-4">
-        <table class="styled-table w-full">
+        <table class="styled-table w-full min-w-[600px]" id="materiasTable">
             <thead>
                 <tr>
                     <th style="width: 5%;"><input type="checkbox" id="selectAll"></th>
-                    <th style="width: 20%;">Código Materia</th>
-                    <th style="width: 55%;">Descripción</th>
-                    <th style="width: 10%;">Trayecto</th>
+                    <th style="width: 15%;">Código Materia</th>
+                    <th style="width: 30%;">Descripción</th>
+                    <th style="width: 15%;">Carrera</th>
+                    <th style="width: 15%;">Trayecto</th>
+                    <th style="width: 10%;">Trimestre</th>
                     <th style="width: 10%;">Acciones</th>
                 </tr>
             </thead>
@@ -54,7 +62,9 @@
                     <td><input type="checkbox" class="rowCheckbox" value="{{ materia.id }}"></td>
                     <td>{{ materia.codigo_materia }}</td>
                     <td>{{ materia.descripcion }}</td>
+                    <td>{{ materia.carrera }}</td>
                     <td>{{ materia.trayecto }}</td>
+                    <td>{{ materia.trimestre }}</td>
                     <td>
                         <a href="{% url 'editar_materia' materia.id %}" class="btn btn-edit">
                             <i class="bx bx-edit"></i> Editar
@@ -83,7 +93,6 @@
             </li>
             {% endif %}
 
-            {# Nueva lógica de paginación compacta compatible con Django #}
             {% with left=page_obj.number|add:"-2" right=page_obj.number|add:"2" %}
                 {% if left < 1 %}{% with left=1 %}{% endwith %}{% endif %}
                 {% if right > page_obj.paginator.num_pages %}{% with right=page_obj.paginator.num_pages %}{% endwith %}{% endif %}
@@ -402,6 +411,59 @@
                 });
             }
         });
+
+        // Implementación de la barra de búsqueda dinámica para materias (AJAX)
+        const searchMateriaInput = document.getElementById('searchMateriaInput');
+        const materiasTableBody = document.querySelector('#materiasTable tbody');
+
+        if (searchMateriaInput) {
+            searchMateriaInput.addEventListener('input', () => {
+                const searchTerm = searchMateriaInput.value.trim();
+
+                if (searchTerm.length > 0) {
+                    fetchAndRenderMaterias(searchTerm);
+                } else {
+                    location.reload(); // Recargar la página si el término está vacío
+                }
+            });
+        }
+
+        function fetchAndRenderMaterias(searchTerm, page = 1) {
+            fetch(`/materias/buscar/?q=${encodeURIComponent(searchTerm)}&page=${page}`)
+                .then(response => response.json())
+                .then data => {
+                    materiasTableBody.innerHTML = '';
+                    if (data.results.length > 0) {
+                        data.results.forEach(materia => {
+                            const row = `
+                                <tr>
+                                    <td><input type="checkbox" class="rowCheckbox" value="${materia.id}"></td>
+                                    <td>${materia.codigo_materia}</td>
+                                    <td>${materia.descripcion}</td>
+                                    <td>${materia.carrera}</td>
+                                    <td>${materia.trayecto}</td>
+                                    <td>${materia.trimestre}</td>
+                                    <td>
+                                        <a href="/materias/editar/${materia.id}" class="btn btn-edit">
+                                            <i class="bx bx-edit"></i> Editar
+                                        </a>
+                                        <button class="btn btn-delete" data-id="${materia.id}">
+                                            <i class="bx bx-trash"></i> Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                            materiasTableBody.insertAdjacentHTML('beforeend', row);
+                        });
+                    } else {
+                        materiasTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron resultados</td></tr>';
+                    }
+                    // Opcional: Reasignar eventos a los nuevos checkboxes/botones si es necesario
+                })
+                .catch(error => {
+                    console.error('Error al buscar:', error);
+                });
+        }
     });
 </script>
 {% endblock %}

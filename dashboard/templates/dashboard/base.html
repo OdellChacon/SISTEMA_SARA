@@ -89,6 +89,12 @@
                 </li>
                 {% endif %}
                 <li>
+                    <i class='bx bx-key'></i>
+                    <a href="{% url 'cambiar_clave' %}" style="text-decoration: none; color: inherit;">
+                        <span>Cambiar Clave</span>
+                    </a>
+                </li>
+                <li>
                     <i class='bx bx-log-out'></i>
                     <a href="{% url 'logout' %}" id="logout-link" style="text-decoration: none; color: inherit; cursor: pointer;">
                         <span>Cerrar Sesión</span>

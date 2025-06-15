@@ -720,75 +720,85 @@ body.dark .docente-form {
   background-color: #e0a800;
 }
 
-/* Campos de entrada y menús desplegables en modo claro */
-.input-group input,
-.input-group select {
-    background-color: #fff; /* Fondo blanco */
-    color: #333; /* Texto gris oscuro */
-    border: 1px solid #ddd; /* Borde gris claro */
-    transition: background 0.3s, color 0.3s, border 0.3s;
+/* --- RESPONSIVIDAD PARA MÓVILES --- */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 5px;
+    min-height: unset;
+  }
+  .table-container {
+    padding: 10px;
+    min-height: unset;
+    max-width: 100vw;
+    width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .docente-form {
+    padding: 10px;
+    border-radius: 8px;
+    min-width: unset;
+  }
+  .docente-form .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  .btn {
+    min-width: 90px;
+    font-size: 14px;
+    padding: 10px 8px;
+  }
+  table,
+  .display,
+  #docentesTable {
+    font-size: 12px;
+    min-width: 600px;
+  }
+  .overflow-x-auto,
+  .table-container {
+    overflow-x: auto;
+  }
+  .search-bar {
+    margin-bottom: 10px;
+  }
+  #modalContent {
+    width: 95vw;
+    min-width: unset;
+    padding: 10px;
+  }
+  .btn-format {
+    padding: 10px;
+    font-size: 12px;
+  }
+  .ant-space {
+    flex-direction: column;
+    row-gap: 4px;
+    column-gap: 0;
+  }
 }
 
-.input-group input:focus,
-.input-group select:focus {
-    border-color: #4070f4; /* Borde azul al enfocar */
-    box-shadow: 0 0 6px rgba(64, 112, 244, 0.4); /* Sombra azul */
+/* Mejorar la experiencia de tabla en móviles */
+@media (max-width: 480px) {
+  table,
+  .display,
+  #docentesTable {
+    font-size: 10px;
+    min-width: 400px;
+  }
+  .btn {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  #modalContent {
+    padding: 5px;
+  }
 }
 
-/* Modo oscuro para campos de entrada y menús desplegables */
-body.dark .input-group input,
-body.dark .input-group select {
-    background-color: #333; /* Fondo oscuro */
-    color: #f1f1f1; /* Texto blanco */
-    border: 1px solid #555; /* Borde gris oscuro */
-}
-
-body.dark .input-group input:focus,
-body.dark .input-group select:focus {
-    border-color: #007bff; /* Borde azul al enfocar */
-    box-shadow: 0 0 6px rgba(0, 123, 255, 0.4); /* Sombra azul */
-}
-
-h2 {
-  color: #333; /* Modo claro */
-  transition: color 0.3s;
-}
-
-body.dark h2 {
-  color: #f1f1f1; /* Modo oscuro */
-}
-
-label {
-  color: #000; /* Texto negro en modo claro */
-  transition: color 0.3s;
-}
-
-body.dark label {
-  color: #f1f1f1; /* Texto blanco en modo oscuro */
-}
-
-input[readonly] {
-  background-color: #fff; /* Modo claro */
-  color: #333; /* Modo claro */
-  border: 1px solid #ddd;
-  transition: background-color 0.3s, color 0.3s, border 0.3s;
-}
-
-body.dark input[readonly] {
-  background-color: #333; /* Modo oscuro */
-  color: #f1f1f1; /* Modo oscuro */
-  border: 1px solid #555;
-}
-
-button.ant-btn {
-  background-color: #f9f9f9; /* Modo claro */
-  color: #333; /* Modo claro */
-  border: 1px solid #ddd;
-  transition: background-color 0.3s, color 0.3s, border 0.3s;
-}
-
-body.dark button.ant-btn {
-  background-color: #444; /* Modo oscuro */
-  color: #f1f1f1; /* Modo oscuro */
-  border: 1px solid #555;
+#docentesTable tbody {
+    transition: min-height 0.2s;
 }

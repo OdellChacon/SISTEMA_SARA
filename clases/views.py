@@ -1,11 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import Clase, Docente, Asistencia, Incumplimiento
 from materias.models import Materia
 from aulas.models import Aula
 from django.utils.timezone import now, localtime, make_aware
 from django.core.paginator import Paginator
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timedelta
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 import json
 
@@ -17,10 +17,8 @@ def verificar_incumplimientos():
             Incumplimiento.objects.get_or_create(clase=clase, docente=clase.docente)
 
 def calendario(request):
-    # Adaptar a los nuevos modelos: obtener campos relevantes
-    docentes = Docente.objects.filter(rol=2).values('id', 'nombre', 'cedula')
-    # Cambiar aquí: usar los campos correctos de Materia
-    materias = Materia.objects.all().values('id', 'codigo_materia', 'descripcion', 'trayecto')
+    docentes = Docente.objects.filter(rol=2).values('id', 'nombre', 'apellido', 'cedula')
+    materias = Materia.objects.all().values('id', 'codigo_materia', 'descripcion', 'carrera', 'trayecto', 'trimestre')
     aulas = Aula.objects.all().values('id', 'codigo_aula', 'descripcion')  # Solo estos campos
 
     if request.user.is_superuser or request.user.is_staff:
@@ -45,12 +43,16 @@ def calendario(request):
     materias_json = json.dumps(list(materias))
     aulas_json = json.dumps(list(aulas))
     clases_json = json.dumps(clases_list)
+    user_id = request.user.id
+    es_staff = request.user.is_superuser or request.user.is_staff
 
     return render(request, 'clases/calendario.html', {
         'docentes_json': docentes_json,
         'materias_json': materias_json,
         'aulas_json': aulas_json,
         'clases_json': clases_json,
+        'user_id': user_id,
+        'es_staff': es_staff,
     })
 
 
@@ -59,23 +61,60 @@ def registrar_clase(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         try:
-            docente = Docente.objects.get(id=data['docente_id'])
+            # Si el usuario es staff/superuser, puede crear para cualquiera
+            if request.user.is_superuser or request.user.is_staff:
+                docente = Docente.objects.get(id=data['docente_id'])
+            else:
+                # Usuario normal: solo puede crear para sí mismo
+                docente = Docente.objects.get(id=request.user.id)
+                data['docente_id'] = request.user.id  # Forzar en el registro
+
             materia = Materia.objects.get(id=data['materia_id'])
             aula = Aula.objects.get(id=data['aula_id'])
 
-            # Validar que hora_inicio sea menor que hora_fin
-            if data['hora_inicio'] >= data['hora_fin']:
+            fecha_inicio = data['fecha_inicio']
+            fecha_fin_repeticion = data.get('fecha_fin_repeticion')
+            hora_inicio = data['hora_inicio']
+            hora_fin = data['hora_fin']
+
+            if hora_inicio >= hora_fin:
                 return JsonResponse({'status': 'error', 'message': 'La hora de inicio debe ser menor que la hora de fin.'}, status=400)
 
-            nueva_clase = Clase.objects.create(
-                docente=docente,
-                materia=materia,
-                aula=aula,
-                fecha=data['fecha_inicio'],
-                hora_inicio=data['hora_inicio'],
-                hora_fin=data['hora_fin']
-            )
-            return JsonResponse({'status': 'success', 'message': 'Clase registrada', 'id': nueva_clase.id})  # ✅ Devolver el ID de la clase
+            # Convertir fechas a objetos date
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
+            if fecha_fin_repeticion:
+                fecha_fin_dt = datetime.strptime(fecha_fin_repeticion, "%Y-%m-%d").date()
+            else:
+                fecha_fin_dt = fecha_inicio_dt
+
+            # Día de la semana de la clase original
+            dia_semana = fecha_inicio_dt.weekday()  # 0=lunes, 6=domingo
+
+            clases_creadas = []
+            fecha_actual = fecha_inicio_dt
+            while fecha_actual <= fecha_fin_dt:
+                if fecha_actual.weekday() == dia_semana:
+                    # Verificar conflicto antes de crear
+                    conflicto = Clase.objects.filter(
+                        aula=aula,
+                        fecha=fecha_actual,
+                        hora_inicio__lt=hora_fin,
+                        hora_fin__gt=hora_inicio
+                    ).exists()
+                    if not conflicto:
+                        clase = Clase.objects.create(
+                            docente=docente,
+                            materia=materia,
+                            aula=aula,
+                            fecha=fecha_actual,
+                            hora_inicio=hora_inicio,
+                            hora_fin=hora_fin
+                        )
+                        clases_creadas.append(clase.id)
+                fecha_actual += timedelta(days=1)
+            if not clases_creadas:
+                return JsonResponse({'status': 'error', 'message': 'No se pudo registrar ninguna clase (conflicto de horario).'})
+            return JsonResponse({'status': 'success', 'message': 'Clases registradas', 'ids': clases_creadas})
         except (Docente.DoesNotExist, Materia.DoesNotExist, Aula.DoesNotExist):
             return JsonResponse({'status': 'error', 'message': 'Docente, materia o aula no encontrado'})
         except Exception as e:
@@ -91,9 +130,10 @@ def registrar_asistencia(request):
             clase_id = data.get('clase_id')
             foto_clase = request.FILES.get('foto_clase')
             foto_lista = request.FILES.get('foto_lista')
+            foto_selfie = request.FILES.get('foto_selfie')  # Nuevo campo
             comentarios = data.get('comentarios', '')
 
-            if not clase_id or not foto_clase or not foto_lista:
+            if not clase_id or not foto_clase or not foto_lista or not foto_selfie:
                 return JsonResponse({'status': 'error', 'message': 'Todos los campos obligatorios deben ser completados.'}, status=400)
 
             clase = Clase.objects.get(id=clase_id)
@@ -101,6 +141,7 @@ def registrar_asistencia(request):
                 clase=clase,
                 foto_clase=foto_clase,
                 foto_lista=foto_lista,
+                foto_selfie=foto_selfie,  # Guardar la selfie
                 comentarios=comentarios
             )
             return JsonResponse({'status': 'success', 'message': 'Asistencia registrada correctamente.'})
@@ -135,6 +176,9 @@ def listar_asistencias(request):
     paginator = Paginator(asistencias, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    # Agregar la url de la selfie en cada asistencia (si existe)
+    for asistencia in page_obj:
+        asistencia.foto_selfie_url = asistencia.foto_selfie.url if hasattr(asistencia, 'foto_selfie') and asistencia.foto_selfie else None
     return render(request, 'clases/listar_asistencias.html', {'page_obj': page_obj})
 
 def listar_incumplimientos(request):
@@ -149,6 +193,10 @@ def listar_incumplimientos(request):
 def eliminar_clase(request):
     if request.method == 'DELETE':
         try:
+            # Solo staff/superuser pueden eliminar
+            if not (request.user.is_superuser or request.user.is_staff):
+                return JsonResponse({'status': 'error', 'message': 'No autorizado'}, status=403)
+            
             data = json.loads(request.body)
             clase_id = data.get('id')
             if not clase_id or not str(clase_id).isdigit():  # ✅ Validar que el ID sea un número válido
@@ -168,6 +216,10 @@ def eliminar_clase(request):
 def reprogramar_clase(request):
     if request.method == 'PUT':
         try:
+            # Solo staff/superuser pueden modificar
+            if not (request.user.is_superuser or request.user.is_staff):
+                return JsonResponse({'status': 'error', 'message': 'No autorizado'}, status=403)
+            
             data = json.loads(request.body)
             clase_id = data.get('id')
             if not clase_id or not str(clase_id).isdigit():  # ✅ Validar que el ID sea un número válido

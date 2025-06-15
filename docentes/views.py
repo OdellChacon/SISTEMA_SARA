@@ -19,10 +19,14 @@ from reportlab.lib.styles import getSampleStyleSheet
 import pdfplumber
 from django.core.paginator import Paginator  # Importar Paginator
 from django.views.decorators.http import require_POST  # Importar require_POST
+from django.db.models import Q  # <--- Agrega esta línea
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 
 
 def docentes_list(request):
-    docentes = Docente.objects.filter(rol=2).order_by('id')  # Filtrar solo docentes
+    docentes = Docente.objects.all().order_by('id')  # Eliminado filtro por rol
     paginator = Paginator(docentes, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -37,8 +41,7 @@ def registrar_docente(request):
         form = DocenteForm(request.POST)
         if form.is_valid():
             docente = form.save(commit=False)
-            docente.rol = 2  # Asignar rol de docente
-            # No asignar username, ya no existe
+            # docente.rol = 2  # Eliminado, ya no se asigna rol
             docente.save()
             return redirect('docentes_list')
         else:
@@ -50,7 +53,7 @@ def registrar_docente(request):
 
 
 def editar_docente(request, docente_id):
-    docente = get_object_or_404(Docente, id=docente_id, rol=2)  # Filtrar por rol
+    docente = get_object_or_404(Docente, id=docente_id)  # Eliminado filtro por rol
 
     if request.method == 'POST':
         form = DocenteUpdateForm(request.POST, instance=docente)
@@ -63,17 +66,17 @@ def editar_docente(request, docente_id):
     return render(request, 'docentes/editar_docente.html', {'form': form, 'docente': docente})
 
 
-@csrf_exempt  # ⚠️ Solo para pruebas, lo mejor es usar CSRF Token correctamente
+@csrf_exempt
 def eliminar_docente(request, docente_id):
     if request.method == "POST":
-        docente = get_object_or_404(Docente, id=docente_id, rol=2)  # Filtrar por rol
+        docente = get_object_or_404(Docente, id=docente_id)  # Eliminado filtro por rol
         docente.delete()
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
 
 #ADMINISTRADORES
 def admin_list(request):
-    docentes = Administrador.objects.filter(rol=1).order_by('id')  # Filtrar solo docentes
+    docentes = Administrador.objects.all().order_by('id')  # Eliminado filtro por rol
     paginator = Paginator(docentes, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -87,8 +90,7 @@ def registrar_admin(request):
         form = AdminForm(request.POST)
         if form.is_valid():
             docente = form.save(commit=False)
-            docente.rol = 1  # Asignar rol de administrador
-            # No asignar username, ya no existe
+            # docente.rol = 1  # Eliminado, ya no se asigna rol
             docente.save()
             return redirect('admin_list')
     else:
@@ -98,7 +100,7 @@ def registrar_admin(request):
 
 
 def editar_admin(request, docente_id):
-    docente = get_object_or_404(Administrador, id=docente_id, rol=2)  # Filtrar por rol
+    docente = get_object_or_404(Administrador, id=docente_id)  # Eliminado filtro por rol
 
     if request.method == 'POST':
         form = AdminUpdateForm(request.POST, instance=docente)
@@ -111,16 +113,16 @@ def editar_admin(request, docente_id):
     return render(request, 'administradores/editar_admin.html', {'form': form, 'docente': docente})
 
 
-@csrf_exempt  # ⚠️ Solo para pruebas, lo mejor es usar CSRF Token correctamente
+@csrf_exempt
 def eliminar_admin(request, docente_id):
     if request.method == "POST":
-        docente = get_object_or_404(Administrador, id=docente_id, rol=1)  # Filtrar por rol
+        docente = get_object_or_404(Administrador, id=docente_id)  # Eliminado filtro por rol
         docente.delete()
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
 
 def detalle_admin(request, docente_id):
-    docente = get_object_or_404(Administrador, id=docente_id, rol=2)  # Filtrar por rol
+    docente = get_object_or_404(Administrador, id=docente_id)  # Eliminado filtro por rol
     return render(request, 'administrador/detalle_admin.html', {'docente': docente})
 
 
@@ -246,10 +248,10 @@ def eliminar_seleccionados(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            cedulas = data.get("cedulas", [])
-            if not cedulas:
+            ids = data.get("ids", [])
+            if not ids:
                 return JsonResponse({"success": False, "error": "No se seleccionaron registros."}, status=400)
-            Docente.objects.filter(cedula__in=cedulas).delete()
+            Docente.objects.filter(id__in=ids).delete()
             return JsonResponse({"success": True})
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)
@@ -276,12 +278,14 @@ def cargar_docentes(request):
                             if Docente.objects.filter(cedula=row["cedula"]).exists():
                                 duplicados += 1
                             else:
-                                Docente.objects.create(
+                                docente = Docente(
                                     nombre=row["nombre"],
                                     apellido=row["apellido"],
                                     cedula=row["cedula"],
                                     activo=row["activo"].lower() in ["true", "1", "yes", "activo"]
                                 )
+                                docente.set_password(row["cedula"])  # Clave provisional = cédula
+                                docente.save()
                                 nuevos += 1
                         except Exception as e:
                             errores += 1
@@ -296,12 +300,14 @@ def cargar_docentes(request):
                             if Docente.objects.filter(cedula=cedula).exists():
                                 duplicados += 1
                             else:
-                                Docente.objects.create(
+                                docente = Docente(
                                     nombre=nombre,
                                     apellido=apellido,
                                     cedula=cedula,
                                     activo=activo
                                 )
+                                docente.set_password(cedula)  # Clave provisional = cédula
+                                docente.save()
                                 nuevos += 1
                         except Exception as e:
                             errores += 1
@@ -323,12 +329,14 @@ def cargar_docentes(request):
                         if Docente.objects.filter(cedula=row["cedula"]).exists():
                             duplicados += 1
                         else:
-                            Docente.objects.create(
+                            docente = Docente(
                                 nombre=row["nombre"],
                                 apellido=row["apellido"],
                                 cedula=row["cedula"],
                                 activo=row["activo"] in [True, "true", "1", "yes"]
                             )
+                            docente.set_password(row["cedula"])  # Clave provisional = cédula
+                            docente.save()
                             nuevos += 1
                 except json.JSONDecodeError as e:
                     messages.error(request, f"Error al leer el archivo JSON: {str(e)}")
@@ -347,7 +355,9 @@ def cargar_docentes(request):
                     if Docente.objects.filter(cedula=datos["cedula"]).exists():
                         duplicados += 1
                     else:
-                        Docente.objects.create(**datos)
+                        docente_obj = Docente(**datos)
+                        docente_obj.set_password(datos["cedula"])  # Clave provisional = cédula
+                        docente_obj.save()
                         nuevos += 1
             # EXCEL
             elif file.name.endswith(".xlsx"):
@@ -362,12 +372,14 @@ def cargar_docentes(request):
                     else:
                         activo_valor = str(row["activo"]).strip().lower()
                         activo_convertido = activo_valor in ["true", "1", "yes", "sí"]
-                        Docente.objects.create(
+                        docente = Docente(
                             nombre=row["nombre"],
                             apellido=row["apellido"],
                             cedula=row["cedula"],
                             activo=activo_convertido
                         )
+                        docente.set_password(row["cedula"])  # Clave provisional = cédula
+                        docente.save()
                         nuevos += 1
             # SQL
             elif file.name.endswith(".sql"):
@@ -382,14 +394,15 @@ def cargar_docentes(request):
                             if Docente.objects.filter(cedula=cedula).exists():
                                 duplicados += 1
                             else:
-                                Docente.objects.create(
+                                docente = Docente(
                                     nombre=nombre,
                                     apellido=apellido,
                                     cedula=cedula,
                                     activo=activo_convertido
                                 )
+                                docente.set_password(cedula)  # Clave provisional = cédula
+                                docente.save()
                                 nuevos += 1
-            # PDF y otros formatos: omitir o adaptar si es necesario
             # ...existing code for PDF, adapt si quieres...
             # ...existing code...
             if nuevos > 0:
@@ -404,8 +417,8 @@ def cargar_docentes(request):
 
 def obtener_todos_los_ids_docentes(request):
     if request.method == "GET":
-        cedulas = list(Docente.objects.values_list("cedula", flat=True))
-        return JsonResponse({"cedulas": cedulas})
+        ids = list(Docente.objects.values_list("id", flat=True))
+        return JsonResponse({"ids": ids})
     return JsonResponse({"error": "Método no permitido."}, status=405)
 
 @require_POST
@@ -413,28 +426,31 @@ def obtener_todos_los_ids_docentes(request):
 def eliminar_seleccionados_docentes(request):
     try:
         data = json.loads(request.body)
-        cedulas = data.get("cedulas", [])
-        if not cedulas:
+        ids = data.get("ids", [])
+        if not ids:
             return JsonResponse({"success": False, "error": "No se seleccionaron registros."}, status=400)
-        Docente.objects.filter(cedula__in=cedulas).delete()
+        Docente.objects.filter(id__in=ids).delete()
         return JsonResponse({"success": True})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
 def detalle_docente(request, docente_id):
-    docente = get_object_or_404(Docente, id=docente_id, rol=2)  # Filtrar por rol
+    docente = get_object_or_404(Docente, id=docente_id)  # Eliminado filtro por rol
     return render(request, 'docentes/detalle_docente.html', {'docente': docente})
 
 
 def buscar_docentes(request):
     termino = request.GET.get('q', '').strip()
+    page_number = request.GET.get('page', 1)
     if termino:
         docentes = Docente.objects.filter(
-            models.Q(nombre__icontains=termino) |
-            models.Q(apellido__icontains=termino) |
-            models.Q(cedula__icontains=termino)
+            Q(nombre__icontains=termino) |
+            Q(apellido__icontains=termino) |
+            Q(cedula__icontains=termino)
         )
+        paginator = Paginator(docentes, 5)
+        page_obj = paginator.get_page(page_number)
         resultados = [
             {
                 'id': docente.id,
@@ -443,7 +459,17 @@ def buscar_docentes(request):
                 'cedula': docente.cedula,
                 'activo': docente.activo,
             }
-            for docente in docentes
+            for docente in page_obj.object_list
         ]
-        return JsonResponse({'results': resultados})
+        return JsonResponse({
+            'results': resultados,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+            'num_pages': paginator.num_pages,
+            'current_page': page_obj.number,
+        })
     return JsonResponse({'results': []})
+
+class CambiarClaveView(LoginRequiredMixin, PasswordChangeView):
+    template_name = 'docentes/cambiar_clave.html'
+    success_url = reverse_lazy('docentes_list')

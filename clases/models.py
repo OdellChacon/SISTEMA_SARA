@@ -11,7 +11,7 @@ def hora_actual():
 class Clase(models.Model):
     id = models.AutoField(primary_key=True)  # ID único generado automáticamente
     docente = models.ForeignKey(Docente, on_delete=models.CASCADE)
-    materia = models.ForeignKey(Materia, on_delete=models.CASCADE)  
+    materia = models.ForeignKey(Materia, on_delete=models.CASCADE, null=True, blank=True)  
     fecha = models.DateField(null=False, default=timezone.now)
     hora_inicio = models.TimeField(null=False)
     hora_fin = models.TimeField(null=False)
@@ -36,6 +36,7 @@ class Asistencia(models.Model):
     clase = models.ForeignKey(Clase, on_delete=models.CASCADE, related_name="asistencias")
     foto_clase = models.ImageField(upload_to="asistencias/clase/")
     foto_lista = models.ImageField(upload_to="asistencias/lista/")
+    foto_selfie = models.ImageField(upload_to="asistencias/selfies/")
     comentarios = models.TextField(blank=True, null=True)
 
     def __str__(self):

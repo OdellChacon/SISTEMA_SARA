@@ -91,14 +91,23 @@ AUTHENTICATION_BACKENDS = [
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Configuración original para PostgreSQL (comentada)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'SARA',
+#         'USER': 'postgres',
+#         'PASSWORD': 'odell24',
+#         'HOST': 'localhost',  
+#         'PORT': '5432',       
+#     }
+# }
+
+# Nueva configuración para SQLite3
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'SARA',
-        'USER': 'postgres',
-        'PASSWORD': 'odell24',
-        'HOST': 'localhost',  
-        'PORT': '5432',       
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

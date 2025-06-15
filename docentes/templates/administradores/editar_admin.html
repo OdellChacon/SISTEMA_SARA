@@ -4,11 +4,12 @@
 {% block title %}Editar Docente{% endblock %}
 
 {% block content %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
 <script src="{% static 'docentes/js/docentes.js' %}" defer></script>
 
 <div class="dashboard-container flex justify-center items-center">
-    <div class="table-container">
+    <div class="table-container w-full max-w-xl sm:max-w-2xl md:max-w-3xl">
         <form method="post" class="docente-form shadow-xl rounded-xl p-8 bg-gradient-to-r from-white to-gray-100 dark:from-gray-800 dark:to-gray-900">
             {% csrf_token %}
             <h2 class="text-3xl font-bold mb-6 text-center">Editar Docente</h2>
@@ -39,7 +40,7 @@
                 </div>
             </div>
 
-            <div class="btn-group mt-8">
+            <div class="btn-group mt-8 flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-green hover:scale-105">
                     <i class="bx bx-save"></i> Guardar Cambios
                 </button>

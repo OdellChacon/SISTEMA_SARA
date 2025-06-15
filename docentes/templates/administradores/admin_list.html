@@ -5,17 +5,18 @@
 
 {% block content %}
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="{% static 'docentes/css/docentes.css' %}">
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'docentes/js/docentes.js' %}" defer></script>
 
 <div class="dashboard-container flex justify-center items-center">
-    <div class="table-container max-w-screen-lg mx-auto mt-10 mb-10">
+    <div class="table-container max-w-screen-lg mx-auto mt-10 mb-10 w-full overflow-x-auto">
         <h2 class="text-3xl font-bold mb-6 text-center">Lista de Administradores</h2>  
 
 
-        <div class="btn-group flex items-center gap-2">
+        <div class="btn-group flex flex-wrap items-center gap-2">
             <button class="btn btn-green" onclick="location.href='{% url 'registrar_admin' %}'">
                 <i class="bx bx-user-plus"></i> Registrar
             </button>
@@ -33,7 +34,7 @@
         </div>
 
         <!-- Controles de selección -->
-        <div id="selectionControls" class="hidden mt-4 flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
+        <div id="selectionControls" class="hidden mt-4 flex flex-wrap justify-between items-center bg-gray-100 p-2 rounded-lg shadow-md">
             <span id="selectedCount" class="text-gray-700 text-sm font-medium">0 seleccionados</span>
             <div class="flex gap-2">
                 <button id="selectAllRecords" class="btn btn-blue text-sm px-3 py-1">Seleccionar todos</button>
@@ -43,7 +44,7 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table id="docentesTable" class="display w-full">
+            <table id="docentesTable" class="display w-full min-w-[600px]">
                 <thead>
                     <tr>
                         <th><input type="checkbox" id="selectAll"></th>
