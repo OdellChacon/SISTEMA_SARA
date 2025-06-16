@@ -88,6 +88,20 @@ AUTHENTICATION_BACKENDS = [
     'docentes.backends.EmailOrUsernameBackend',  # Backend personalizado
     'django.contrib.auth.backends.ModelBackend',  # Backend predeterminado de Django
 ]
+
+import dj_database_url
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DATABASES = {
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+}
+
+print(os.getenv('DATABASE_URL'))
+
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -163,3 +177,5 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CSRF_TRUSTED_ORIGINS = ['http://*', 'https://web-production-1eb3.up.railway.app']
+ALLOWED_HOSTS = ['web-production-1eb3.up.railway.app', 'localhost', '*']
