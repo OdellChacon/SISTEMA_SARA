@@ -16,15 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const ES_STAFF = window.ES_STAFF === true || window.ES_STAFF === "true";
     const USER_ID = window.USER_ID;
 
-    const calendar = new FullCalendar.Calendar(calendarioEl, {
-        initialView: 'dayGridMonth',
-        locale: 'es',
-        aspectRatio: 1.5,
-        height: 'auto',
-        contentHeight: 600,
-        scrollTime: '08:00:00',
-        events: listaClases.map(clase => {
-            const now = new Date();
+    // Preprocesar los eventos pero no los pases aún al calendario
+    function mapClasesToEvents(listaClases, listaAulas, listaMaterias) {
+        const now = new Date();
+        return listaClases.map(clase => {
             const endDate = new Date(`${clase.fecha}T${clase.hora_fin}`);
             // Sumar 12 horas a la hora de fin
             const endDatePlus12h = new Date(endDate.getTime() + 12 * 60 * 60 * 1000);
@@ -49,7 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     aula_id: clase['aula__id']
                 }
             };
-        }),
+        });
+    }
+
+    // Inicializa el calendario SIN eventos
+    const calendar = new FullCalendar.Calendar(calendarioEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        aspectRatio: 1.5,
+        height: 'auto',
+        contentHeight: 600,
+        scrollTime: '08:00:00',
+        events: [], // No cargar eventos aquí
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -241,7 +247,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             });
                         } else {
-                            Swal.fire('Error', data.message || 'No se pudo registrar la clase.', 'error');
+                            let errorMsg = data.message || 'No se pudo registrar la clase.';
+                            if (data.errors) {
+                                if (Array.isArray(data.errors)) {
+                                    errorMsg += '<ul style="text-align:left;">' + data.errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+                                } else if (typeof data.errors === 'string') {
+                                    errorMsg += `<br>${data.errors}`;
+                                }
+                            } else {
+                                errorMsg += '<br>Verifique que el aula y el docente no estén ocupados en ese horario.';
+                            }
+                            Swal.fire({
+                                title: 'Conflicto de horario',
+                                html: errorMsg,
+                                icon: 'error'
+                            });
                         }
                     })
                     .catch(error => {
@@ -483,39 +503,123 @@ document.addEventListener('DOMContentLoaded', () => {
     calendar.render();
     console.log("✅ Calendario cargado correctamente");
 
+    // Carga los eventos después de renderizar el calendario
+    setTimeout(() => {
+        const eventos = mapClasesToEvents(listaClases, listaAulas, listaMaterias);
+        calendar.addEventSource(eventos);
+        // Aplica filtros después de agregar eventos
+        applyFilters();
+    }, 0);
+
+    // Filtro de docentes
+    const docentesList = window.DOCENTES_LIST || [];
+    const filterDocente = document.getElementById('filter-docente');
+    const docenteFilterSearch = document.getElementById('docente_filter_search');
+    // Filtro de carrera
+    const filterCarrera = document.getElementById('filter-carrera');
+
+    // Llenar el select de docentes dinámicamente
+    if (filterDocente && filterDocente.options.length <= 1) {
+        docentesList.forEach(docente => {
+            const option = document.createElement('option');
+            option.value = docente.id;
+            option.text = `${docente.nombre} ${docente.apellido || ''}`.trim();
+            filterDocente.appendChild(option);
+        });
+    }
+
+    // Llenar el select de carreras dinámicamente
+    if (filterCarrera && filterCarrera.options.length <= 1) {
+        const carreras = [...new Set(listaMaterias.map(m => m.carrera))].sort();
+        carreras.forEach(carrera => {
+            if (carrera && carrera.trim() !== "") {
+                const option = document.createElement('option');
+                option.value = carrera;
+                option.text = carrera;
+                filterCarrera.appendChild(option);
+            }
+        });
+    }
+
+    // Búsqueda en el select de docentes
+    if (docenteFilterSearch && filterDocente) {
+        docenteFilterSearch.addEventListener('input', function() {
+            const val = docenteFilterSearch.value.toLowerCase();
+            let firstVisible = null;
+            for (const option of filterDocente.options) {
+                if (option.value === "") {
+                    option.style.display = '';
+                    continue;
+                }
+                const visible = option.text.toLowerCase().includes(val);
+                option.style.display = visible ? '' : 'none';
+                if (visible && !firstVisible) firstVisible = option;
+            }
+            if (firstVisible) {
+                filterDocente.value = firstVisible.value;
+            }
+            // Disparar el filtro dinámicamente al buscar
+            applyFilters();
+        });
+    }
+
     const filterEstado = document.getElementById('filter-estado');
 
     function applyFilters() {
-        const estado = filterEstado.value;
+        const estado = typeof filterEstado !== "undefined" && filterEstado ? filterEstado.value : "";
+        const docenteId = filterDocente ? filterDocente.value : "";
+        const carrera = filterCarrera ? filterCarrera.value : "";
         const now = new Date();
 
         calendar.getEvents().forEach(event => {
             let mostrar = true;
-            if (estado === 'finalizadas') {
-                // Mostrar solo si han pasado más de 12 horas desde la hora de fin
-                if (event.end) {
-                    const endDatePlus12h = new Date(event.end.getTime() + 12 * 60 * 60 * 1000);
-                    mostrar = endDatePlus12h < now;
-                } else {
-                    mostrar = false;
-                }
-            } else if (estado === 'por-ver') {
-                // Mostrar solo si la clase sigue activa (no han pasado 12 horas desde la hora de fin)
-                if (event.end) {
-                    const endDatePlus12h = new Date(event.end.getTime() + 12 * 60 * 60 * 1000);
-                    mostrar = endDatePlus12h >= now;
-                } else {
-                    mostrar = true;
+            // Filtro por estado (si existe)
+            if (typeof estado !== "undefined" && estado) {
+                if (estado === 'finalizadas') {
+                    if (event.end) {
+                        const endDatePlus12h = new Date(event.end.getTime() + 12 * 60 * 60 * 1000);
+                        mostrar = endDatePlus12h < now;
+                    } else {
+                        mostrar = false;
+                    }
+                } else if (estado === 'por-ver') {
+                    if (event.end) {
+                        const endDatePlus12h = new Date(event.end.getTime() + 12 * 60 * 60 * 1000);
+                        mostrar = endDatePlus12h >= now;
+                    } else {
+                        mostrar = true;
+                    }
                 }
             }
-            event.setProp('display', (!estado || mostrar) ? '' : 'none');
+            // Filtro por docente
+            if (docenteId && event.extendedProps.docente_id != docenteId) {
+                mostrar = false;
+            }
+            // Filtro por carrera
+            if (carrera) {
+                // Buscar la materia correspondiente para obtener la carrera
+                const materia = listaMaterias.find(m => m.id == event.extendedProps.materia_id);
+                if (!materia || materia.carrera !== carrera) {
+                    mostrar = false;
+                }
+            }
+            event.setProp('display', mostrar ? '' : 'none');
         });
     }
 
-    filterEstado.addEventListener('change', applyFilters);
+    if (filterDocente) {
+        filterDocente.addEventListener('change', applyFilters);
+    }
+    if (filterCarrera) {
+        filterCarrera.addEventListener('change', applyFilters);
+    }
 
-    // Aplica el filtro al cargar la página
-    calendar.on('eventsSet', applyFilters);
+    // Elimina calendar.on('eventsSet', applyFilters);
+    // applyFilters se llama después de addEventSource arriba
+
+    // Aplica el filtro al cargar la página y cuando se actualizan los eventos
+    // calendar.on('eventsSet', applyFilters);
+    applyFilters();
 });
 
 function getCookie(name) {

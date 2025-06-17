@@ -53,5 +53,3 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect(reverse('login'))
-
-def passw(request):pass
