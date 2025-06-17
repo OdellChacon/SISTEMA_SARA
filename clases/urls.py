@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import calendario, clases_json, registrar_clase, registrar_asistencia, listar_asistencias, listar_incumplimientos, eliminar_clase, reprogramar_clase
+from .views import calendario, clases_json, registrar_clase, registrar_asistencia, listar_asistencias, listar_incumplimientos, eliminar_clase, reprogramar_clase, clases_filtradas_json
 
 urlpatterns = [
     path('calendario/', calendario, name='calendario'),
     path('clases-json/', clases_json, name='clases_json'),
+    path('clases-filtradas-json/', clases_filtradas_json, name='clases_filtradas_json'),  # Nuevo endpoint optimizado
     path('registrar-clase/', registrar_clase, name='registrar_clase'),
     path('registrar-asistencia/', registrar_asistencia, name='registrar_asistencia'),
     path('listar-asistencias/', listar_asistencias, name='listar_asistencias'),

@@ -7,6 +7,7 @@ from django.utils.timezone import now, localtime, make_aware
 from django.core.paginator import Paginator
 from datetime import date, time, datetime, timedelta
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.views.decorators.http import require_GET
 import json
 
 def verificar_incumplimientos():
@@ -19,42 +20,63 @@ def verificar_incumplimientos():
 def calendario(request):
     docentes = Docente.objects.filter(rol=2).values('id', 'nombre', 'apellido', 'cedula')
     materias = Materia.objects.all().values('id', 'codigo_materia', 'descripcion', 'carrera', 'trayecto', 'trimestre')
-    aulas = Aula.objects.all().values('id', 'codigo_aula', 'descripcion')  # Solo estos campos
+    aulas = Aula.objects.all().values('id', 'codigo_aula', 'descripcion')
+    # No enviar clases_json aquí
+    user_id = request.user.id
+    es_staff = request.user.is_superuser or request.user.is_staff
 
-    if request.user.is_superuser or request.user.is_staff:
-        clases = Clase.objects.all()
-    else:
-        clases = Clase.objects.filter(docente=request.user)
+    return render(request, 'clases/calendario.html', {
+        'docentes_json': json.dumps(list(docentes)),
+        'materias_json': json.dumps(list(materias)),
+        'aulas_json': json.dumps(list(aulas)),
+        'user_id': user_id,
+        'es_staff': es_staff,
+    })
+
+@require_GET
+def clases_filtradas_json(request):
+    """
+    Endpoint para obtener clases filtradas por rango de fechas y filtros.
+    Parámetros GET:
+        - docente_id
+        - carrera
+        - fecha_inicio
+        - fecha_fin
+    """
+    clases = Clase.objects.all()
+    docente_id = request.GET.get('docente_id')
+    carrera = request.GET.get('carrera')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+
+    if docente_id:
+        clases = clases.filter(docente_id=docente_id)
+    if carrera:
+        clases = clases.filter(materia__carrera=carrera)
+    if fecha_inicio:
+        clases = clases.filter(fecha__gte=fecha_inicio)
+    if fecha_fin:
+        clases = clases.filter(fecha__lte=fecha_fin)
+
+    # Elimina paginación: devuelve todos los eventos del rango solicitado
     clases_list = []
-    for clase in clases:
+    for clase in clases.select_related('materia', 'docente', 'aula'):
         clases_list.append({
             'id': clase.id,
             'fecha': clase.fecha.isoformat() if clase.fecha else None,
             'hora_inicio': clase.hora_inicio.isoformat() if clase.hora_inicio else None,
             'hora_fin': clase.hora_fin.isoformat() if clase.hora_fin else None,
-            'materia__descripcion': clase.materia.descripcion,  # Cambiado aquí
-            'materia__id': clase.materia.id,
+            'materia__descripcion': clase.materia.descripcion if clase.materia else "",
+            'materia__id': clase.materia.id if clase.materia else None,
             'docente__nombre': clase.docente.nombre,
             'docente__id': clase.docente.id,
             'aula__id': clase.aula.id,
         })
-    # Serialización para JS
-    docentes_json = json.dumps(list(docentes))
-    materias_json = json.dumps(list(materias))
-    aulas_json = json.dumps(list(aulas))
-    clases_json = json.dumps(clases_list)
-    user_id = request.user.id
-    es_staff = request.user.is_superuser or request.user.is_staff
 
-    return render(request, 'clases/calendario.html', {
-        'docentes_json': docentes_json,
-        'materias_json': materias_json,
-        'aulas_json': aulas_json,
-        'clases_json': clases_json,
-        'user_id': user_id,
-        'es_staff': es_staff,
+    return JsonResponse({
+        'results': clases_list,
+        'count': len(clases_list),
     })
-
 
 @csrf_exempt
 def registrar_clase(request):

@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const calendarioEl = document.getElementById('calendar');
-
     if (!calendarioEl) {
         console.error("❌ Contenedor del calendario no encontrado");
         return;
@@ -10,29 +9,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const listaDocentes = JSON.parse(document.getElementById('docentes-json').textContent);
     const listaMaterias = JSON.parse(document.getElementById('materias-json').textContent);
     const listaAulas = JSON.parse(document.getElementById('aulas-json').textContent);
-    const listaClases = JSON.parse(document.getElementById('clases-json').textContent);
+    // Elimina: const listaClases = JSON.parse(document.getElementById('clases-json').textContent);
 
     // Asegura que ES_STAFF sea booleano verdadero si es true o "true"
     const ES_STAFF = window.ES_STAFF === true || window.ES_STAFF === "true";
     const USER_ID = window.USER_ID;
 
-    // Preprocesar los eventos pero no los pases aún al calendario
+    // Nueva función para cargar eventos desde el backend según filtros
+    async function fetchClasesFiltradas({docenteId = "", carrera = "", fechaInicio = "", fechaFin = "", page = 1, pageSize = 500} = {}) {
+        const params = new URLSearchParams();
+        if (docenteId) params.append('docente_id', docenteId);
+        if (carrera) params.append('carrera', carrera);
+        if (fechaInicio) params.append('fecha_inicio', fechaInicio);
+        if (fechaFin) params.append('fecha_fin', fechaFin);
+        params.append('page', page);
+        params.append('page_size', pageSize);
+
+        const resp = await fetch(`/clases/clases-filtradas-json/?${params.toString()}`);
+        if (!resp.ok) return {results: [], count: 0};
+        return await resp.json();
+    }
+
+    // Mapear clases a eventos
     function mapClasesToEvents(listaClases, listaAulas, listaMaterias) {
         const now = new Date();
         return listaClases.map(clase => {
             const endDate = new Date(`${clase.fecha}T${clase.hora_fin}`);
-            // Sumar 12 horas a la hora de fin
             const endDatePlus12h = new Date(endDate.getTime() + 12 * 60 * 60 * 1000);
             const isInactive = endDatePlus12h < now;
-
-            // Buscar el aula correspondiente
             const aulaObj = listaAulas.find(aula => aula.id == clase['aula__id']);
-            // Buscar la materia por id para obtener la descripción
             const materiaObj = listaMaterias.find(m => m.id == clase['materia__id']);
-
             return {
                 id: clase.id,
-                // Cambia aquí: usa la descripción de la materia
                 title: `${materiaObj ? materiaObj.descripcion : 'Sin materia'} - ${clase['docente__nombre']}`,
                 start: `${clase.fecha}T${clase.hora_inicio}`,
                 end: `${clase.fecha}T${clase.hora_fin}`,
@@ -503,19 +511,10 @@ document.addEventListener('DOMContentLoaded', () => {
     calendar.render();
     console.log("✅ Calendario cargado correctamente");
 
-    // Carga los eventos después de renderizar el calendario
-    setTimeout(() => {
-        const eventos = mapClasesToEvents(listaClases, listaAulas, listaMaterias);
-        calendar.addEventSource(eventos);
-        // Aplica filtros después de agregar eventos
-        applyFilters();
-    }, 0);
-
-    // Filtro de docentes
+    // Filtros
     const docentesList = window.DOCENTES_LIST || [];
     const filterDocente = document.getElementById('filter-docente');
     const docenteFilterSearch = document.getElementById('docente_filter_search');
-    // Filtro de carrera
     const filterCarrera = document.getElementById('filter-carrera');
 
     // Llenar el select de docentes dinámicamente
@@ -565,62 +564,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterEstado = document.getElementById('filter-estado');
 
-    function applyFilters() {
-        const estado = typeof filterEstado !== "undefined" && filterEstado ? filterEstado.value : "";
+    // Nueva función para recargar eventos según filtros
+    async function reloadCalendarEvents() {
+        // Opcional: puedes agregar un loader/spinner aquí
         const docenteId = filterDocente ? filterDocente.value : "";
         const carrera = filterCarrera ? filterCarrera.value : "";
-        const now = new Date();
-
-        calendar.getEvents().forEach(event => {
-            let mostrar = true;
-            // Filtro por estado (si existe)
-            if (typeof estado !== "undefined" && estado) {
-                if (estado === 'finalizadas') {
-                    if (event.end) {
-                        const endDatePlus12h = new Date(event.end.getTime() + 12 * 60 * 60 * 1000);
-                        mostrar = endDatePlus12h < now;
-                    } else {
-                        mostrar = false;
-                    }
-                } else if (estado === 'por-ver') {
-                    if (event.end) {
-                        const endDatePlus12h = new Date(event.end.getTime() + 12 * 60 * 60 * 1000);
-                        mostrar = endDatePlus12h >= now;
-                    } else {
-                        mostrar = true;
-                    }
-                }
-            }
-            // Filtro por docente
-            if (docenteId && event.extendedProps.docente_id != docenteId) {
-                mostrar = false;
-            }
-            // Filtro por carrera
-            if (carrera) {
-                // Buscar la materia correspondiente para obtener la carrera
-                const materia = listaMaterias.find(m => m.id == event.extendedProps.materia_id);
-                if (!materia || materia.carrera !== carrera) {
-                    mostrar = false;
-                }
-            }
-            event.setProp('display', mostrar ? '' : 'none');
-        });
+        // Opcional: puedes agregar rango de fechas según la vista del calendario
+        const {results} = await fetchClasesFiltradas({docenteId, carrera});
+        // Elimina todos los eventos actuales
+        calendar.getEvents().forEach(ev => ev.remove());
+        // Agrega los nuevos eventos
+        const eventos = mapClasesToEvents(results, listaAulas, listaMaterias);
+        calendar.addEventSource(eventos);
     }
 
-    if (filterDocente) {
-        filterDocente.addEventListener('change', applyFilters);
-    }
-    if (filterCarrera) {
-        filterCarrera.addEventListener('change', applyFilters);
-    }
+    // Llama a reloadCalendarEvents al cargar la página
+    reloadCalendarEvents();
 
+    // Llama a reloadCalendarEvents cuando cambian los filtros
+    if (filterDocente) filterDocente.addEventListener('change', reloadCalendarEvents);
+    if (filterCarrera) filterCarrera.addEventListener('change', reloadCalendarEvents);
+    if (docenteFilterSearch) docenteFilterSearch.addEventListener('input', reloadCalendarEvents);
+
+    // Aplica filtros después de agregar eventos
+    // applyFilters();
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Utilidad para crear select con búsqueda
+function createSearchableSelect(id, options, placeholder, getOptionLabel) {
+    return `
+        <input type="text" id="${id}_search" class="swal2-input" placeholder="Buscar ${placeholder}..." style="margin-bottom:4px;">
+        <select id="${id}" class="swal2-input" style="grid-column: span 2;">
+            ${options.map(opt => `<option value="${opt.id}">${getOptionLabel(opt)}</option>`).join('')}
+        </select>
+    `;
+}
     // Elimina calendar.on('eventsSet', applyFilters);
     // applyFilters se llama después de addEventSource arriba
 
     // Aplica el filtro al cargar la página y cuando se actualizan los eventos
     // calendar.on('eventsSet', applyFilters);
     applyFilters();
-});
+
 
 function getCookie(name) {
     let cookieValue = null;

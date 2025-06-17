@@ -34,7 +34,6 @@
 <script id="docentes-json" type="application/json">{{ docentes_json|safe }}</script>
 <script id="materias-json" type="application/json">{{ materias_json|safe }}</script>
 <script id="aulas-json" type="application/json">{{ aulas_json|safe }}</script>
-<script id="clases-json" type="application/json">{{ clases_json|safe }}</script>
 <script>
     window.ES_STAFF = {% if es_staff %}true{% else %}false{% endif %};
     window.USER_ID = {{ user_id|default:'null' }};
