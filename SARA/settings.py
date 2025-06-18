@@ -107,24 +107,24 @@ print(os.getenv('DATABASE_URL'))
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # Configuración original para PostgreSQL (comentada)
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'SARA',
-#         'USER': 'postgres',
-#         'PASSWORD': 'odell24',
-#         'HOST': 'localhost',  
-#         'PORT': '5432',       
-#     }
-# }
-
-# Nueva configuración para SQLite3
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'SARA',
+        'USER': 'postgres',
+        'PASSWORD': 'odell24',
+        'HOST': 'localhost',  
+        'PORT': '5432',       
     }
 }
+
+# Nueva configuración para SQLite3
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
