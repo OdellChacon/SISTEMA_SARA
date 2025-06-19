@@ -48,6 +48,7 @@ def eliminar_aula(request, aula_id):
 
 @csrf_exempt
 def importar_aulas(request):
+    format = request.GET.get('format', '').lower()
     if request.method == 'POST' and request.FILES.get('file'):
         file = request.FILES['file']
         filename = file.name.lower()
@@ -55,7 +56,8 @@ def importar_aulas(request):
             if val is None or str(val).strip() == '' or str(val).lower() == 'null':
                 return '-' if dash else ''
             return str(val)
-        if filename.endswith('.csv'):
+        # Permitir selección por formato (aunque solo csv y excel estén implementados)
+        if format == 'csv' or filename.endswith('.csv'):
             reader = csv.DictReader(file.read().decode('utf-8').splitlines())
             for row in reader:
                 Aula.objects.create(
@@ -67,7 +69,7 @@ def importar_aulas(request):
                     serial=safe_value(row.get('serial'))
                 )
             return JsonResponse({'success': True})
-        elif filename.endswith('.xlsx'):
+        elif format == 'excel' or filename.endswith('.xlsx'):
             import openpyxl
             wb = openpyxl.load_workbook(file)
             ws = wb.active

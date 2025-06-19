@@ -138,7 +138,6 @@
     <div id="modalContent" class="bg-black dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[450px]" onclick="event.stopPropagation()">
         <h3 id="modalTitle" class="text-xl font-semibold mb-4 text-gray-900 dark:text-white text-center"></h3>
         <div class="grid grid-cols-3 gap-4">
-            <!-- Tarjetas de formatos -->
             <div class="btn-format bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md transition-all cursor-pointer" data-format="csv" onclick="handleAction('csv')">
                 <i class="bx bx-file text-2xl"></i> CSV
             </div>
@@ -193,7 +192,7 @@
             const input = document.createElement("input");
             input.type = "file";
             input.accept = getAcceptFormat(format);
-            input.onchange = () => handleImport(input.files[0]);
+            input.onchange = () => handleImport(input.files[0], format);
             input.click();
         } else if (action === "export") {
             const exportUrl = "{% url 'exportar_aulas' 'FORMAT' 'all' %}".replace("FORMAT", format);
@@ -213,12 +212,12 @@
         return formats[format] || "";
     }
 
-    function handleImport(file) {
+    function handleImport(file, format) {
         const form = new FormData();
         form.append("csrfmiddlewaretoken", "{{ csrf_token }}");
         form.append("file", file);
 
-        fetch("{% url 'cargar_aulas' %}", {
+        fetch("{% url 'cargar_aulas' %}?format=" + format, {
             method: "POST",
             body: form
         })
@@ -452,6 +451,13 @@
                 }
             });
         }
+
+        document.querySelector(".btn-cancel").addEventListener("click", closeModal);
+        document.getElementById("modalFormat").addEventListener("click", function(event) {
+            if (event.target === document.getElementById("modalFormat")) {
+                closeModal();
+            }
+        });
     });
 </script>
 {% endblock %}
